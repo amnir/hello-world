@@ -44,11 +44,17 @@ const STATE = {
     MENU: 'menu',
     LEVEL_SELECT: 'levelSelect',
     PLAYING: 'playing',
+    PAUSED: 'paused',
     CHALLENGE: 'challenge',
     WAVE_CLEAR: 'waveClear',
     LEVEL_WON: 'levelWon',
     LEVEL_LOST: 'levelLost',
 };
+
+// Pause button dimensions (large for kid-friendly touch targets)
+const PAUSE_BTN_X = CANVAS_W - 55;
+const PAUSE_BTN_Y = HUD_HEIGHT + 12;
+const PAUSE_BTN_SIZE = 48;
 
 // ─── Game Class ─────────────────────────────────────────────────────────────
 
@@ -220,6 +226,9 @@ class Game {
             case STATE.PLAYING:
                 this.onPlayingClick(pos);
                 break;
+            case STATE.PAUSED:
+                this.onPausedClick(pos);
+                break;
             case STATE.CHALLENGE:
                 this.onChallengeClick(pos);
                 break;
@@ -330,6 +339,14 @@ class Game {
     // ─── Playing Handlers ───────────────────────────────────────────────
 
     onPlayingClick(pos) {
+        // Check if clicking the pause button
+        if (pos.x >= PAUSE_BTN_X && pos.x <= PAUSE_BTN_X + PAUSE_BTN_SIZE &&
+            pos.y >= PAUSE_BTN_Y && pos.y <= PAUSE_BTN_Y + PAUSE_BTN_SIZE) {
+            playClick();
+            this.pauseGame();
+            return;
+        }
+
         // Check if clicking a floating star
         for (let i = this.floatingStars.length - 1; i >= 0; i--) {
             const star = this.floatingStars[i];
@@ -458,6 +475,40 @@ class Game {
         }
     }
 
+    // ─── Pause Handlers ─────────────────────────────────────────────────
+
+    pauseGame() {
+        this.state = STATE.PAUSED;
+        this.dragging = null;
+        stopBgMusic();
+    }
+
+    resumeGame() {
+        this.state = STATE.PLAYING;
+        startBgMusic();
+    }
+
+    onPausedClick(pos) {
+        // Resume button (centered on screen)
+        const btnW = 220;
+        const btnH = 70;
+        const btnX = CANVAS_W / 2 - btnW / 2;
+        const btnY = CANVAS_H / 2 - 10;
+        if (pos.x >= btnX && pos.x <= btnX + btnW && pos.y >= btnY && pos.y <= btnY + btnH) {
+            playClick();
+            this.resumeGame();
+            return;
+        }
+
+        // Menu button (below resume)
+        const menuBtnY = btnY + 90;
+        if (pos.x >= btnX && pos.x <= btnX + btnW && pos.y >= menuBtnY && pos.y <= menuBtnY + btnH) {
+            playClick();
+            stopBgMusic();
+            this.state = STATE.LEVEL_SELECT;
+        }
+    }
+
     // ─── Game Logic ─────────────────────────────────────────────────────
 
     startLevel(index) {
@@ -574,6 +625,9 @@ class Game {
     // ─── Update Loop ────────────────────────────────────────────────────
 
     update(dt) {
+        // When paused, do nothing — freeze all game logic
+        if (this.state === STATE.PAUSED) return;
+
         if (this.state !== STATE.PLAYING) {
             // Update challenge result timer
             if (this.state === STATE.CHALLENGE && this.challengeResult) {
@@ -959,6 +1013,10 @@ class Game {
                 if (this.state === STATE.WAVE_CLEAR) {
                     this.renderWaveClear();
                 }
+                break;
+            case STATE.PAUSED:
+                this.renderGame();
+                this.renderPaused();
                 break;
             case STATE.CHALLENGE:
                 this.renderGame();
@@ -1362,6 +1420,33 @@ class Game {
                 ctx.fillText('חינם', bx + btnSize / 2, by + btnSize - 2);
             }
         }
+
+        // Pause button (below HUD, top-right corner — large and obvious)
+        if (this.state === STATE.PLAYING) {
+            const px = PAUSE_BTN_X;
+            const py = PAUSE_BTN_Y;
+            const ps = PAUSE_BTN_SIZE;
+
+            // Button background
+            ctx.fillStyle = 'rgba(44, 62, 80, 0.75)';
+            this.roundRect(ctx, px, py, ps, ps, 12);
+            ctx.fill();
+            ctx.strokeStyle = '#ecf0f1';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Pause icon (two vertical bars)
+            const barW = ps * 0.18;
+            const barH = ps * 0.5;
+            const gap = ps * 0.12;
+            const barX = px + ps / 2 - gap / 2 - barW;
+            const barY = py + ps / 2 - barH / 2;
+            ctx.fillStyle = '#ecf0f1';
+            this.roundRect(ctx, barX, barY, barW, barH, 3);
+            ctx.fill();
+            this.roundRect(ctx, barX + barW + gap, barY, barW, barH, 3);
+            ctx.fill();
+        }
     }
 
     // ─── Challenge Overlay ──────────────────────────────────────────────
@@ -1432,6 +1517,75 @@ class Game {
         ctx.lineWidth = 3;
         ctx.strokeText('\u200Fהגל עבר!', CANVAS_W / 2, CANVAS_H / 2);
         ctx.fillText('\u200Fהגל עבר!', CANVAS_W / 2, CANVAS_H / 2);
+    }
+
+    renderPaused() {
+        const ctx = this.ctx;
+
+        // Dim the game field
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+        // Pause box
+        const boxW = 340;
+        const boxH = 300;
+        const boxX = (CANVAS_W - boxW) / 2;
+        const boxY = (CANVAS_H - boxH) / 2;
+
+        ctx.fillStyle = '#fff';
+        this.roundRect(ctx, boxX, boxY, boxW, boxH, 24);
+        ctx.fill();
+        ctx.strokeStyle = '#3498db';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Title
+        ctx.fillStyle = '#2c3e50';
+        ctx.font = 'bold 42px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('\u200Fהפסקה', CANVAS_W / 2, boxY + 60);
+
+        // Pause icon (decorative)
+        const iconY = boxY + 115;
+        const iconBarW = 14;
+        const iconBarH = 40;
+        const iconGap = 12;
+        ctx.fillStyle = '#3498db';
+        this.roundRect(ctx, CANVAS_W / 2 - iconGap / 2 - iconBarW, iconY - iconBarH / 2, iconBarW, iconBarH, 4);
+        ctx.fill();
+        this.roundRect(ctx, CANVAS_W / 2 + iconGap / 2, iconY - iconBarH / 2, iconBarW, iconBarH, 4);
+        ctx.fill();
+
+        // Resume button (large, green, kid-friendly)
+        const btnW = 220;
+        const btnH = 70;
+        const btnX = CANVAS_W / 2 - btnW / 2;
+        const btnY = CANVAS_H / 2 - 10;
+
+        ctx.fillStyle = '#2ecc71';
+        this.roundRect(ctx, btnX, btnY, btnW, btnH, 16);
+        ctx.fill();
+        ctx.strokeStyle = '#27ae60';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 30px Arial';
+        ctx.fillText('\u200Fהמשך לשחק!', CANVAS_W / 2, btnY + btnH / 2);
+
+        // Menu button
+        const menuBtnY = btnY + 90;
+        ctx.fillStyle = '#95a5a6';
+        this.roundRect(ctx, btnX, menuBtnY, btnW, btnH, 16);
+        ctx.fill();
+        ctx.strokeStyle = '#7f8c8d';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 24px Arial';
+        ctx.fillText('תפריט ראשי', CANVAS_W / 2, menuBtnY + btnH / 2);
     }
 
     renderLevelWon() {
