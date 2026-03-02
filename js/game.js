@@ -1067,72 +1067,211 @@ class Game {
         // Sky background
         const skyGrad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
         skyGrad.addColorStop(0, '#87CEEB');
+        skyGrad.addColorStop(0.7, '#b8e6f0');
         skyGrad.addColorStop(1, '#98FB98');
         ctx.fillStyle = skyGrad;
         ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-        // Sun
+        // ── Pulsing Sun with Rotating Rays ──
+        const sunX = 100, sunY = 80;
+        const sunBaseR = 45;
+        const sunPulse = sunBaseR + Math.sin(this.time * 2) * 5;
+
+        // Outer glow layers
+        ctx.fillStyle = 'rgba(241, 196, 15, 0.1)';
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, sunPulse + 40, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(241, 196, 15, 0.2)';
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, sunPulse + 25, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(241, 196, 15, 0.35)';
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, sunPulse + 12, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Rotating triangular rays
+        const rayRotation = this.time * 0.3;
         ctx.fillStyle = '#f1c40f';
-        ctx.beginPath();
-        ctx.arc(100, 80, 50, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = 'rgba(241, 196, 15, 0.3)';
-        ctx.beginPath();
-        ctx.arc(100, 80, 70, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Clouds
-        this.drawCloud(ctx, 250, 60, 40);
-        this.drawCloud(ctx, 600, 40, 30);
-        this.drawCloud(ctx, 800, 80, 35);
-
-        // Title
-        ctx.fillStyle = '#2c3e50';
-        ctx.font = 'bold 52px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('שומרי החוכמה', CANVAS_W / 2, CANVAS_H * 0.2);
-
-        // Subtitle
-        ctx.fillStyle = '#7f8c8d';
-        ctx.font = '24px Arial';
-        ctx.fillText('Wisdom Defenders', CANVAS_W / 2, CANVAS_H * 0.3);
-
-        // Show some characters
-        const chars = [
-            { draw: DEFENDER_SPRITES.numberBuddy, x: 200, y: 350 },
-            { draw: DEFENDER_SPRITES.letterLion, x: 350, y: 360 },
-            { draw: DEFENDER_SPRITES.starMaker, x: CANVAS_W / 2, y: 380 },
-            { draw: DEFENDER_SPRITES.colorFlower, x: 610, y: 355 },
-            { draw: DEFENDER_SPRITES.musicBird, x: 760, y: 360 },
-        ];
-        for (const ch of chars) {
-            ch.draw(ctx, ch.x, ch.y, 35, this.time);
+        for (let r = 0; r < 12; r++) {
+            const angle = rayRotation + (r * Math.PI * 2) / 12;
+            ctx.save();
+            ctx.translate(sunX, sunY);
+            ctx.rotate(angle);
+            ctx.beginPath();
+            ctx.moveTo(sunPulse + 5, -6);
+            ctx.lineTo(sunPulse + 28, 0);
+            ctx.lineTo(sunPulse + 5, 6);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
         }
 
-        // Play button
+        // Main sun circle
+        ctx.fillStyle = '#f1c40f';
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, sunPulse, 0, Math.PI * 2);
+        ctx.fill();
+        // Sun highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+        ctx.beginPath();
+        ctx.arc(sunX - 10, sunY - 10, sunPulse * 0.45, 0, Math.PI * 2);
+        ctx.fill();
+
+        // ── Drifting Clouds ──
+        const clouds = [
+            { baseX: 0, y: 55, size: 40, speed: 18 },
+            { baseX: 200, y: 35, size: 32, speed: 12 },
+            { baseX: 450, y: 70, size: 38, speed: 15 },
+            { baseX: 650, y: 25, size: 28, speed: 10 },
+            { baseX: 850, y: 60, size: 34, speed: 20 },
+        ];
+        for (const c of clouds) {
+            const cx = (c.baseX + this.time * c.speed) % (CANVAS_W + 200) - 100;
+            this.drawCloud(ctx, cx, c.y, c.size);
+        }
+
+        // ── Floating Sparkle Stars ──
+        const sparkles = [
+            { x: 180, y: 30, phase: 0, speed: 3.0 },
+            { x: 320, y: 55, phase: 1.2, speed: 2.5 },
+            { x: 500, y: 20, phase: 2.5, speed: 3.5 },
+            { x: 620, y: 65, phase: 0.8, speed: 2.8 },
+            { x: 750, y: 35, phase: 3.8, speed: 3.2 },
+            { x: 870, y: 50, phase: 1.5, speed: 2.2 },
+            { x: 410, y: 80, phase: 4.2, speed: 2.9 },
+            { x: 560, y: 45, phase: 5.0, speed: 3.3 },
+            { x: 240, y: 90, phase: 2.0, speed: 2.6 },
+            { x: 700, y: 15, phase: 3.2, speed: 3.1 },
+        ];
+        for (const s of sparkles) {
+            const alpha = 0.3 + Math.sin(this.time * s.speed + s.phase) * 0.35 + 0.35;
+            const sz = 3 + Math.sin(this.time * s.speed + s.phase) * 1.5;
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            // 4-pointed star
+            ctx.moveTo(s.x, s.y - sz);
+            ctx.lineTo(s.x + sz * 0.3, s.y - sz * 0.3);
+            ctx.lineTo(s.x + sz, s.y);
+            ctx.lineTo(s.x + sz * 0.3, s.y + sz * 0.3);
+            ctx.lineTo(s.x, s.y + sz);
+            ctx.lineTo(s.x - sz * 0.3, s.y + sz * 0.3);
+            ctx.lineTo(s.x - sz, s.y);
+            ctx.lineTo(s.x - sz * 0.3, s.y - sz * 0.3);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // ── Title Text Animation ──
+        const titleY = CANVAS_H * 0.2 + Math.sin(this.time * 1.5) * 6;
+        const titleScale = 1 + Math.sin(this.time * 2) * 0.03;
+        ctx.save();
+        ctx.translate(CANVAS_W / 2, titleY);
+        ctx.scale(titleScale, titleScale);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        // Drop shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+        ctx.font = 'bold 52px Arial';
+        ctx.fillText('שומרי החוכמה', 3, 3);
+        // Main title
+        ctx.fillStyle = '#2c3e50';
+        ctx.fillText('שומרי החוכמה', 0, 0);
+        ctx.restore();
+
+        // Subtitle with offset phase
+        const subY = CANVAS_H * 0.3 + Math.sin(this.time * 1.5 + 0.8) * 5;
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        // Drop shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+        ctx.font = '24px Arial';
+        ctx.fillText('Wisdom Defenders', CANVAS_W / 2 + 2, subY + 2);
+        // Main subtitle
+        ctx.fillStyle = '#5d6d7e';
+        ctx.fillText('Wisdom Defenders', CANVAS_W / 2, subY);
+        ctx.restore();
+
+        // ── All 7 Defenders in Showcase Row ──
+        const defenderNames = [
+            'starMaker', 'numberBuddy', 'letterLion', 'colorFlower',
+            'shapeShield', 'patternPeacock', 'musicBird'
+        ];
+        const defStartX = 100;
+        const defSpacing = (CANVAS_W - 200) / (defenderNames.length - 1);
+        const defBaseY = 365;
+        for (let i = 0; i < defenderNames.length; i++) {
+            const dx = defStartX + i * defSpacing;
+            const dy = defBaseY + Math.sin(this.time * 2 + i * 0.9) * 8;
+            DEFENDER_SPRITES[defenderNames[i]](ctx, dx, dy, 32, this.time);
+        }
+
+        // ── Play Button with Pulsing Glow ──
         const btnX = CANVAS_W / 2 - 80;
         const btnY = CANVAS_H * 0.55;
+        const glowIntensity = 8 + Math.sin(this.time * 3) * 6;
+        ctx.save();
+        ctx.shadowColor = 'rgba(46, 204, 113, 0.6)';
+        ctx.shadowBlur = glowIntensity;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
         ctx.fillStyle = '#2ecc71';
         this.roundRect(ctx, btnX, btnY, 160, 60, 15);
         ctx.fill();
+        ctx.restore();
         ctx.strokeStyle = '#27ae60';
         ctx.lineWidth = 3;
+        this.roundRect(ctx, btnX, btnY, 160, 60, 15);
         ctx.stroke();
 
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 28px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
         ctx.fillText('\u200Fבואו נשחק!', CANVAS_W / 2, btnY + 30);
 
-        // Grass at bottom
+        // ── Wandering Enemies ──
+        const enemies = [
+            { name: 'muddleCloud', startX: 0, speed: 25, y: 435 },
+            { name: 'messMonster', startX: 250, speed: 18, y: 450 },
+            { name: 'sleepySnail', startX: 500, speed: 12, y: 440 },
+            { name: 'gigglyGremlin', startX: 750, speed: 22, y: 455 },
+        ];
+        for (const e of enemies) {
+            const ex = (e.startX + this.time * e.speed) % (CANVAS_W + 100) - 50;
+            ENEMY_SPRITES[e.name](ctx, ex, e.y, 26, this.time);
+        }
+
+        // ── Enhanced Grass with Dual-Wave Animation ──
         ctx.fillStyle = '#27ae60';
         ctx.fillRect(0, CANVAS_H - 40, CANVAS_W, 40);
-        ctx.fillStyle = '#2ecc71';
-        for (let i = 0; i < CANVAS_W; i += 15) {
+
+        // Layer 1: darker grass blades
+        ctx.fillStyle = '#1e8449';
+        for (let i = 0; i < CANVAS_W; i += 12) {
+            const sway = Math.sin(i * 0.1 + this.time * 1.5) * 5;
+            const h = 14 + (i * 7 % 5);
             ctx.beginPath();
             ctx.moveTo(i, CANVAS_H - 40);
-            ctx.lineTo(i + 7, CANVAS_H - 55 - Math.sin(i * 0.1 + this.time) * 5);
-            ctx.lineTo(i + 14, CANVAS_H - 40);
+            ctx.lineTo(i + 5 + sway, CANVAS_H - 40 - h);
+            ctx.lineTo(i + 10, CANVAS_H - 40);
+            ctx.fill();
+        }
+
+        // Layer 2: lighter grass blades
+        ctx.fillStyle = '#2ecc71';
+        for (let i = 6; i < CANVAS_W; i += 15) {
+            const sway = Math.sin(i * 0.15 + this.time * 2 + 1) * 6;
+            const h = 12 + (i * 11 % 6);
+            ctx.beginPath();
+            ctx.moveTo(i, CANVAS_H - 40);
+            ctx.lineTo(i + 6 + sway, CANVAS_H - 40 - h);
+            ctx.lineTo(i + 12, CANVAS_H - 40);
             ctx.fill();
         }
     }
