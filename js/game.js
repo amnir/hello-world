@@ -382,73 +382,10 @@ class Game {
     // ─── Playing Handlers ───────────────────────────────────────────────
 
     onPlayingClick(pos) {
-        // Tutorial interception
-        if (this.tutorial.active) {
-            const step = this.tutorial.currentStep;
-
-            // Skip button check (bottom-left)
-            const skipW = 80, skipH = 36;
-            const skipX = 15, skipY = CANVAS_H - skipH - 15;
-            if (pos.x >= skipX && pos.x <= skipX + skipW && pos.y >= skipY && pos.y <= skipY + skipH) {
-                playClick();
-                this.tutorial.skip();
-                return;
-            }
-
-            if (step.waitFor === 'tap') {
-                playClick();
-                this.tutorial.advance();
-                return;
-            }
-
-            if (step.waitFor === 'select_numberBuddy') {
-                // Only allow HUD clicks, and only on numberBuddy
-                if (pos.y < HUD_HEIGHT) {
-                    // Find the numberBuddy button position
-                    const defenders = this.currentLevel.availableDefenders;
-                    const btnSize = 60, spacing = 10;
-                    const totalW = defenders.length * (btnSize + spacing) - spacing;
-                    const startX = CANVAS_W / 2 - totalW / 2;
-                    const nbIndex = defenders.indexOf('numberBuddy');
-                    if (nbIndex >= 0) {
-                        const bx = startX + nbIndex * (btnSize + spacing);
-                        const by = 15;
-                        if (pos.x >= bx && pos.x <= bx + btnSize && pos.y >= by && pos.y <= by + btnSize) {
-                            this.selectedDefender = 'numberBuddy';
-                            playClick();
-                            this.tutorial.advance();
-                        }
-                    }
-                }
-                return;
-            }
-
-            if (step.waitFor === 'place_defender') {
-                // Allow starting a drag if defender is selected
-                if (this.selectedDefender === 'numberBuddy') {
-                    this.dragging = { type: 'numberBuddy', x: pos.x, y: pos.y };
-                }
-                return;
-            }
-
-            if (step.waitFor === 'star_collected') {
-                // Only allow star clicks
-                for (let i = this.floatingStars.length - 1; i >= 0; i--) {
-                    const star = this.floatingStars[i];
-                    const dx = pos.x - star.x;
-                    const dy = pos.y - star.y;
-                    if (dx * dx + dy * dy < 600) {
-                        this.floatingStars.splice(i, 1);
-                        playStarCollect();
-                        this.pendingStarReward = 2;
-                        this.showChallenge();
-                        return;
-                    }
-                }
-                return;
-            }
-
-            return; // Block all other input during tutorial
+        // Tutorial interception — all logic delegated to Tutorial class
+        if (this.tutorial.isActive) {
+            this.tutorial.handleClick(pos);
+            return;
         }
 
         // Help button check (Level 1 only, after tutorial done)
@@ -500,16 +437,10 @@ class Game {
         if (!this.currentLevel) return;
 
         const defenders = this.currentLevel.availableDefenders;
-        const btnSize = 60;
-        const spacing = 10;
-        const totalW = defenders.length * (btnSize + spacing) - spacing;
-        const startX = CANVAS_W / 2 - totalW / 2;
 
         for (let i = 0; i < defenders.length; i++) {
-            const bx = startX + i * (btnSize + spacing);
-            const by = 15;
-
-            if (pos.x >= bx && pos.x <= bx + btnSize && pos.y >= by && pos.y <= by + btnSize) {
+            const btn = this.getDefenderButtonRect(i);
+            if (pos.x >= btn.x && pos.x <= btn.x + btn.w && pos.y >= btn.y && pos.y <= btn.y + btn.h) {
                 const defId = defenders[i];
                 const def = DEFENDER_DEFS[defId];
 
@@ -671,6 +602,16 @@ class Game {
         }
     }
 
+    getDefenderButtonRect(index) {
+        if (!this.currentLevel) return null;
+        const defenders = this.currentLevel.availableDefenders;
+        if (index < 0 || index >= defenders.length) return null;
+        const btnSize = 60, spacing = 10;
+        const totalW = defenders.length * (btnSize + spacing) - spacing;
+        const startX = CANVAS_W / 2 - totalW / 2;
+        return { x: startX + index * (btnSize + spacing), y: 15, w: btnSize, h: btnSize };
+    }
+
     placeDefender(type, row, col) {
         const def = DEFENDER_DEFS[type];
         if (this.stars < def.cost) return;
@@ -797,6 +738,7 @@ class Game {
         if (this.tutorial.isActive) {
             this.tutorial.updateTimers(dt);
         }
+        this.tutorial.updateHelpButton();
 
         // ── Wave management ──
         if (!this.tutorial.isActive) {
@@ -1989,16 +1931,12 @@ class Game {
         // Defender selection bar
         if (!this.currentLevel) return;
         const defenders = this.currentLevel.availableDefenders;
-        const btnSize = 60;
-        const spacing = 10;
-        const totalW = defenders.length * (btnSize + spacing) - spacing;
-        const startX = CANVAS_W / 2 - totalW / 2;
 
         for (let i = 0; i < defenders.length; i++) {
             const defId = defenders[i];
             const def = DEFENDER_DEFS[defId];
-            const bx = startX + i * (btnSize + spacing);
-            const by = 15;
+            const btn = this.getDefenderButtonRect(i);
+            const bx = btn.x, by = btn.y, btnSize = btn.w;
 
             const canAfford = this.stars >= def.cost;
             const isSelected = this.selectedDefender === defId;

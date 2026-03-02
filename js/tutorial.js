@@ -3,7 +3,7 @@
 // =============================================================================
 
 import { DEFENDER_SPRITES } from './sprites.js';
-import { playClick, playStarCollect, speak } from './audio.js';
+import { playClick, playStarCollect, playWrong, speak } from './audio.js';
 
 // ─── Constants (duplicated from game.js to avoid circular imports) ──────────
 
@@ -19,6 +19,10 @@ const CELL_H = (GRID_BOTTOM - GRID_TOP) / 3;
 const PAUSE_BTN_X = CANVAS_W - 55;
 const PAUSE_BTN_Y = HUD_HEIGHT + 12;
 const PAUSE_BTN_SIZE = 48;
+
+const SKIP_BTN = { w: 90, h: 48, x: 15 };
+const TUTORIAL_TARGET_CELL = { row: 1, col: 3 };
+const HELP_BTN_SIZE = 48;
 
 // ─── Tutorial Steps ─────────────────────────────────────────────────────────
 
@@ -52,12 +56,16 @@ export class Tutorial {
         return TUTORIAL_STEPS[this.step];
     }
 
-    start(waveTimer) {
+    _reset(waveTimer) {
         this.active = true;
         this.step = 0;
         this.textTimer = 0;
         this.pulseTime = 0;
         this.savedWaveTimer = waveTimer;
+    }
+
+    start(waveTimer) {
+        this._reset(waveTimer);
         speak(TUTORIAL_STEPS[0].text);
     }
 
@@ -82,13 +90,18 @@ export class Tutorial {
         this.game.waveTimer = this.savedWaveTimer;
     }
 
+    _nudgeWrongTarget() {
+        playWrong();
+        speak(this.currentStep.text);
+    }
+
     handleClick(pos) {
         const step = TUTORIAL_STEPS[this.step];
 
-        // Skip button check (bottom-left)
-        const skipW = 80, skipH = 36;
-        const skipX = 15, skipY = CANVAS_H - skipH - 15;
-        if (pos.x >= skipX && pos.x <= skipX + skipW && pos.y >= skipY && pos.y <= skipY + skipH) {
+        // Skip button check
+        const skipY = CANVAS_H - SKIP_BTN.h - 15;
+        if (pos.x >= SKIP_BTN.x && pos.x <= SKIP_BTN.x + SKIP_BTN.w &&
+            pos.y >= skipY && pos.y <= skipY + SKIP_BTN.h) {
             playClick();
             this.skip();
             return true;
@@ -103,20 +116,18 @@ export class Tutorial {
         if (step.waitFor === 'select_numberBuddy') {
             if (pos.y < HUD_HEIGHT) {
                 const defenders = this.game.currentLevel.availableDefenders;
-                const btnSize = 60, spacing = 10;
-                const totalW = defenders.length * (btnSize + spacing) - spacing;
-                const startX = CANVAS_W / 2 - totalW / 2;
                 const nbIndex = defenders.indexOf('numberBuddy');
                 if (nbIndex >= 0) {
-                    const bx = startX + nbIndex * (btnSize + spacing);
-                    const by = 15;
-                    if (pos.x >= bx && pos.x <= bx + btnSize && pos.y >= by && pos.y <= by + btnSize) {
+                    const btn = this.game.getDefenderButtonRect(nbIndex);
+                    if (pos.x >= btn.x && pos.x <= btn.x + btn.w && pos.y >= btn.y && pos.y <= btn.y + btn.h) {
                         this.game.selectedDefender = 'numberBuddy';
                         playClick();
                         this.advance();
+                        return true;
                     }
                 }
             }
+            this._nudgeWrongTarget();
             return true;
         }
 
@@ -140,6 +151,7 @@ export class Tutorial {
                     return true;
                 }
             }
+            this._nudgeWrongTarget();
             return true;
         }
 
@@ -151,10 +163,9 @@ export class Tutorial {
         const step = TUTORIAL_STEPS[this.step];
         if (step.id !== 'place_defender') return false;
 
-        if (cell.row === 1 && cell.col === 3) {
-            this.game.placeDefender(type, cell.row, cell.col);
-            this.advance();
-        }
+        // Accept any valid empty cell placement
+        this.game.placeDefender(type, cell.row, cell.col);
+        this.advance();
         return true;
     }
 
@@ -163,8 +174,11 @@ export class Tutorial {
         this.pulseTime += dt;
 
         // Force-spawn a star when on collect_star step and no stars exist
-        if (TUTORIAL_STEPS[this.step].id === 'collect_star' && this.game.floatingStars.length === 0) {
-            const targetPos = this.game.gridToScreen(1, 3);
+        // Guard: only while in PLAYING state (not during challenge overlay)
+        if (this.currentStep.id === 'collect_star' &&
+            this.game.floatingStars.length === 0 &&
+            this.game.state === 'playing') {
+            const targetPos = this.game.gridToScreen(TUTORIAL_TARGET_CELL.row, TUTORIAL_TARGET_CELL.col);
             this.game.floatingStars.push({
                 x: targetPos.x,
                 y: targetPos.y - 40,
@@ -172,6 +186,16 @@ export class Tutorial {
                 lifetime: 999,
             });
         }
+    }
+
+    updateHelpButton() {
+        if (this.game.currentLevelIndex !== 0 || !this.done || this.game.state !== 'playing') {
+            this.helpBtnArea = null;
+            return;
+        }
+        const helpX = PAUSE_BTN_X + (PAUSE_BTN_SIZE - HELP_BTN_SIZE) / 2;
+        const helpY = PAUSE_BTN_Y + PAUSE_BTN_SIZE + 8;
+        this.helpBtnArea = { x: helpX, y: helpY, size: HELP_BTN_SIZE };
     }
 
     render() {
@@ -186,20 +210,19 @@ export class Tutorial {
         this._renderHighlight(step);
         this._renderBubble(step);
 
-        // Skip button (bottom-left)
-        const skipW = 80, skipH = 36;
-        const skipX = 15, skipY = CANVAS_H - skipH - 15;
+        // Skip button
+        const skipY = CANVAS_H - SKIP_BTN.h - 15;
         ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-        roundRect(ctx, skipX, skipY, skipW, skipH, 8);
+        roundRect(ctx, SKIP_BTN.x, skipY, SKIP_BTN.w, SKIP_BTN.h, 8);
         ctx.fill();
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
         ctx.lineWidth = 1;
         ctx.stroke();
         ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        ctx.font = 'bold 16px Arial';
+        ctx.font = 'bold 18px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('דלגו', skipX + skipW / 2, skipY + skipH / 2);
+        ctx.fillText('דלגו', SKIP_BTN.x + SKIP_BTN.w / 2, skipY + SKIP_BTN.h / 2);
 
         // "Tap to continue" hint for tap steps
         if (step.waitFor === 'tap') {
@@ -208,7 +231,7 @@ export class Tutorial {
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
                 ctx.font = '18px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText('לחצו להמשיך', CANVAS_W / 2, CANVAS_H - 60);
+                ctx.fillText('לחצו להמשיך', CANVAS_W / 2, CANVAS_H - 70);
             }
         }
     }
@@ -221,17 +244,14 @@ export class Tutorial {
 
         if (step.id === 'select_defender') {
             const defenders = this.game.currentLevel.availableDefenders;
-            const btnSize = 60, spacing = 10;
-            const totalW = defenders.length * (btnSize + spacing) - spacing;
-            const startX = CANVAS_W / 2 - totalW / 2;
             const nbIndex = defenders.indexOf('numberBuddy');
             if (nbIndex >= 0) {
-                const bx = startX + nbIndex * (btnSize + spacing);
-                targetRect = { x: bx - 4, y: 11, w: btnSize + 8, h: btnSize + 8 };
+                const btn = this.game.getDefenderButtonRect(nbIndex);
+                targetRect = { x: btn.x - 4, y: btn.y - 4, w: btn.w + 8, h: btn.h + 8 };
             }
         } else if (step.id === 'place_defender') {
-            const cx = GRID_LEFT + 3 * CELL_W;
-            const cy = GRID_TOP + 1 * CELL_H;
+            const cx = GRID_LEFT + TUTORIAL_TARGET_CELL.col * CELL_W;
+            const cy = GRID_TOP + TUTORIAL_TARGET_CELL.row * CELL_H;
             targetRect = { x: cx, y: cy, w: CELL_W, h: CELL_H };
         } else if (step.id === 'collect_star') {
             if (this.game.floatingStars.length > 0) {
@@ -316,29 +336,23 @@ export class Tutorial {
     }
 
     renderHelpButton() {
-        if (this.game.currentLevelIndex !== 0 || !this.done || this.game.state !== 'playing') {
-            this.helpBtnArea = null;
-            return;
-        }
+        if (!this.helpBtnArea) return;
 
         const ctx = this.game.ctx;
-        const helpSize = 40;
-        const helpX = PAUSE_BTN_X + (PAUSE_BTN_SIZE - helpSize) / 2;
-        const helpY = PAUSE_BTN_Y + PAUSE_BTN_SIZE + 8;
-        this.helpBtnArea = { x: helpX, y: helpY, size: helpSize };
+        const { x, y, size } = this.helpBtnArea;
 
         ctx.fillStyle = 'rgba(52, 152, 219, 0.75)';
-        roundRect(ctx, helpX, helpY, helpSize, helpSize, 10);
+        roundRect(ctx, x, y, size, size, 10);
         ctx.fill();
         ctx.strokeStyle = '#2980b9';
         ctx.lineWidth = 2;
         ctx.stroke();
 
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 24px Arial';
+        ctx.font = 'bold 26px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('?', helpX + helpSize / 2, helpY + helpSize / 2);
+        ctx.fillText('?', x + size / 2, y + size / 2);
     }
 
     checkHelpButtonClick(pos) {
@@ -347,7 +361,8 @@ export class Tutorial {
         if (pos.x >= b.x && pos.x <= b.x + b.size && pos.y >= b.y && pos.y <= b.y + b.size) {
             playClick();
             this.done = false;
-            this.start(this.game.waveTimer);
+            this._reset(this.game.waveTimer);
+            speak(TUTORIAL_STEPS[0].text);
             return true;
         }
         return false;
