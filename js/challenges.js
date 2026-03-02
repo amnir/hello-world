@@ -121,11 +121,23 @@ function drawShapeAt(ctx, shape, x, y, size, color = '#3498db') {
             break;
         }
         case 'heart': {
+            // Center the heart on (x, y), proportions matched to ❤️ emoji
+            const tip = y + size * 0.9;    // bottom tip
+            const dip = y - size * 0.2;    // center dip between bumps
             ctx.beginPath();
-            const topY = y - size * 0.3;
-            ctx.moveTo(x, y + size * 0.7);
-            ctx.bezierCurveTo(x - size * 1.2, y, x - size * 1.2, topY, x, topY + size * 0.3);
-            ctx.bezierCurveTo(x + size * 1.2, topY, x + size * 1.2, y, x, y + size * 0.7);
+            ctx.moveTo(x, tip);
+            // Left half: wider bumps to match emoji proportions
+            ctx.bezierCurveTo(
+                x - size * 1.5, y + size * 0.1,   // wide at bottom
+                x - size * 0.85, y - size * 1.2,  // apex: high, slightly inward
+                x, dip                              // center dip
+            );
+            // Right half: mirror
+            ctx.bezierCurveTo(
+                x + size * 0.85, y - size * 1.2,  // apex: high, slightly inward
+                x + size * 1.5, y + size * 0.1,   // wide at bottom
+                x, tip                              // back to tip
+            );
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
