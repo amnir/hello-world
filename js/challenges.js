@@ -143,6 +143,7 @@ function generateCountingChallenge() {
 
     return {
         type: 'counting',
+        questionText: `כמה ${fruit} יש פה?`,
         correctIndex,
         render(ctx, area, time) {
             const { x, y, w, h } = area;
@@ -234,31 +235,23 @@ function generateColorChallenge() {
 
     return {
         type: 'colors',
+        questionText: `איפה ${correctColor.name}?`,
         render(ctx, area, time) {
             const { x, y, w, h } = area;
 
-            // Show the color name as a big colored text header
-            ctx.fillStyle = correctColor.color;
-            ctx.font = `bold ${h * 0.1}px Arial`;
+            // Listening prompt — question is read aloud
+            ctx.fillStyle = '#7f8c8d';
+            ctx.font = `bold ${h * 0.09}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(`\u200Fאיפה ${correctColor.name}?`, x + w / 2, y + h * 0.22);
-
-            // Show a big swatch of the target color
-            ctx.fillStyle = correctColor.color;
-            ctx.beginPath();
-            ctx.arc(x + w / 2, y + h * 0.38, h * 0.08, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 2;
-            ctx.stroke();
+            ctx.fillText('🔊', x + w / 2, y + h * 0.25);
 
             // Answer options: 3 large colored circles
             this.optionAreas = [];
-            const circleR = Math.min(w * 0.1, h * 0.12);
+            const circleR = Math.min(w * 0.12, h * 0.14);
             const spacing = w * 0.28;
             const startX = x + w / 2 - spacing;
-            const cy = y + h * 0.68;
+            const cy = y + h * 0.58;
 
             selected.forEach((col, i) => {
                 const cx = startX + i * spacing;
@@ -313,27 +306,23 @@ function generateLetterChallenge() {
 
     return {
         type: 'letters',
+        questionText: `מצאו את האות ${correctLetter.name}`,
         render(ctx, area, time) {
             const { x, y, w, h } = area;
 
-            // Show the target letter big and clear
-            ctx.fillStyle = '#c0392b';
-            ctx.font = `bold ${h * 0.22}px Arial`;
+            // Listening prompt — question is read aloud
+            ctx.fillStyle = '#7f8c8d';
+            ctx.font = `bold ${h * 0.09}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(correctLetter.letter, x + w / 2, y + h * 0.3);
-
-            // Instruction: "?איפה האות" (Where is the letter?)
-            ctx.fillStyle = '#2c3e50';
-            ctx.font = `bold ${h * 0.06}px Arial`;
-            ctx.fillText('\u200Fמצאו את האות?', x + w / 2, y + h * 0.5);
+            ctx.fillText('🔊', x + w / 2, y + h * 0.25);
 
             // Answer options: 3 letters in boxes
             this.optionAreas = [];
-            const btnSize = Math.min(w * 0.18, h * 0.22);
+            const btnSize = Math.min(w * 0.22, h * 0.26);
             const spacing = w * 0.28;
             const startX = x + w / 2 - spacing;
-            const btnY = y + h * 0.62;
+            const btnY = y + h * 0.48;
 
             selected.forEach((item, i) => {
                 const bx = startX + i * spacing - btnSize / 2;
@@ -390,25 +379,23 @@ function generateShapeChallenge() {
 
     return {
         type: 'shapes',
+        questionText: `מצאו את ה${correctShape.name}`,
         render(ctx, area, time) {
             const { x, y, w, h } = area;
 
-            // Show target shape large
-            drawShapeAt(ctx, correctShape.nameEn, x + w / 2, y + h * 0.28, h * 0.1, shapeColor);
-
-            // Instruction
-            ctx.fillStyle = '#2c3e50';
-            ctx.font = `bold ${h * 0.06}px Arial`;
+            // Listening prompt — question is read aloud
+            ctx.fillStyle = '#7f8c8d';
+            ctx.font = `bold ${h * 0.09}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('\u200Fמצאו את הצורה?', x + w / 2, y + h * 0.48);
+            ctx.fillText('🔊', x + w / 2, y + h * 0.25);
 
             // Answer options: 3 shapes
             this.optionAreas = [];
-            const btnSize = Math.min(w * 0.2, h * 0.25);
+            const btnSize = Math.min(w * 0.24, h * 0.28);
             const spacing = w * 0.28;
             const startX = x + w / 2 - spacing;
-            const optY = y + h * 0.68;
+            const optY = y + h * 0.58;
 
             selected.forEach((shape, i) => {
                 const cx = startX + i * spacing;
@@ -484,6 +471,7 @@ function generatePatternChallenge() {
 
     return {
         type: 'patterns',
+        questionText: 'מה הבא בתור?',
         render(ctx, area, time) {
             const { x, y, w, h } = area;
 

@@ -204,3 +204,27 @@ export function stopBgMusic() {
         bgMusicInterval = null;
     }
 }
+
+// ─── Speech Synthesis (Text-to-Speech) ─────────────────────────────────────
+
+/** Speak a Hebrew text aloud using the Web Speech API */
+export function speak(text) {
+    if (!text || !window.speechSynthesis) return;
+
+    // Cancel any ongoing speech first
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'he-IL';
+    utterance.rate = 0.85;   // slightly slower for kids
+    utterance.pitch = 1.1;   // slightly higher pitch for friendly tone
+
+    // Try to find a Hebrew voice
+    const voices = window.speechSynthesis.getVoices();
+    const hebrewVoice = voices.find(v => v.lang.startsWith('he'));
+    if (hebrewVoice) {
+        utterance.voice = hebrewVoice;
+    }
+
+    window.speechSynthesis.speak(utterance);
+}
