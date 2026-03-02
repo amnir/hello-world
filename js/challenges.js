@@ -4,6 +4,8 @@
 // The game pauses while a challenge is active.
 // =============================================================================
 
+const F = '"Segoe UI", "Trebuchet MS", system-ui, sans-serif';
+
 // ─── Hebrew Data ─────────────────────────────────────────────────────────────
 
 const HEBREW_LETTERS = [
@@ -192,7 +194,7 @@ function generateCountingChallenge() {
             const { x, y, w, h } = area;
 
             // Title area — show fruits to count
-            ctx.font = `${Math.min(w / (correctCount + 1), 50)}px Arial`;
+            ctx.font = `${Math.min(w / (correctCount + 1), 50)}px ${F}`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
@@ -204,13 +206,13 @@ function generateCountingChallenge() {
             for (let i = 0; i < correctCount; i++) {
                 const fx = startX + i * fruitSize;
                 const fy = y + h * 0.3;
-                ctx.font = `${fruitSize * 0.8}px Arial`;
+                ctx.font = `${fruitSize * 0.8}px ${F}`;
                 ctx.fillText(fruit, fx, fy);
             }
 
             // Question mark
             ctx.fillStyle = '#2c3e50';
-            ctx.font = `bold ${h * 0.08}px Arial`;
+            ctx.font = `bold ${h * 0.08}px ${F}`;
             ctx.fillText('\u200Fכמה?', x + w / 2, y + h * 0.52);
 
             // Answer options (3 big number buttons)
@@ -236,7 +238,7 @@ function generateCountingChallenge() {
 
                 // Number
                 ctx.fillStyle = '#fff';
-                ctx.font = `bold ${btnH * 0.6}px Arial`;
+                ctx.font = `bold ${btnH * 0.6}px ${F}`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(num.toString(), bx + btnW / 2, by + btnH / 2);
@@ -284,7 +286,7 @@ function generateColorChallenge() {
 
             // Listening prompt — question is read aloud
             ctx.fillStyle = '#7f8c8d';
-            ctx.font = `bold ${h * 0.09}px Arial`;
+            ctx.font = `bold ${h * 0.09}px ${F}`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('🔊', x + w / 2, y + h * 0.25);
@@ -355,7 +357,7 @@ function generateLetterChallenge() {
 
             // Listening prompt — question is read aloud
             ctx.fillStyle = '#7f8c8d';
-            ctx.font = `bold ${h * 0.09}px Arial`;
+            ctx.font = `bold ${h * 0.09}px ${F}`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('🔊', x + w / 2, y + h * 0.25);
@@ -380,7 +382,7 @@ function generateLetterChallenge() {
                 ctx.stroke();
 
                 ctx.fillStyle = '#2c3e50';
-                ctx.font = `bold ${btnSize * 0.6}px Arial`;
+                ctx.font = `bold ${btnSize * 0.6}px ${F}`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(item.letter, bx + btnSize / 2, by + btnSize / 2);
@@ -428,7 +430,7 @@ function generateShapeChallenge() {
 
             // Listening prompt — question is read aloud
             ctx.fillStyle = '#7f8c8d';
-            ctx.font = `bold ${h * 0.09}px Arial`;
+            ctx.font = `bold ${h * 0.09}px ${F}`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('🔊', x + w / 2, y + h * 0.25);
@@ -545,14 +547,14 @@ function generatePatternChallenge() {
             ctx.stroke();
             ctx.setLineDash([]);
             ctx.fillStyle = '#333';
-            ctx.font = `bold ${circleR * 1.2}px Arial`;
+            ctx.font = `bold ${circleR * 1.2}px ${F}`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('?', startX + patternLen * circleR * 3, patY);
 
             // Instruction
             ctx.fillStyle = '#2c3e50';
-            ctx.font = `bold ${h * 0.06}px Arial`;
+            ctx.font = `bold ${h * 0.06}px ${F}`;
             ctx.fillText('\u200Fמה הבא?', x + w / 2, y + h * 0.5);
 
             // Answer options
@@ -621,14 +623,14 @@ function generateAnimalChallengeHabitat() {
             const { x, y, w, h } = area;
 
             // Show the animal large in the center-top area
-            ctx.font = `${h * 0.22}px Arial`;
+            ctx.font = `${h * 0.22}px ${F}`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(animal.emoji, x + w / 2, y + h * 0.28);
 
             // Question text
             ctx.fillStyle = '#2c3e50';
-            ctx.font = `bold ${h * 0.07}px Arial`;
+            ctx.font = `bold ${h * 0.07}px ${F}`;
             ctx.fillText(`\u200Fאיפה גר ה${animal.name}?`, x + w / 2, y + h * 0.48);
 
             // Habitat buttons (3 options)
@@ -653,11 +655,11 @@ function generateAnimalChallengeHabitat() {
 
                 // Habitat emoji and name
                 ctx.fillStyle = '#fff';
-                ctx.font = `${btnH * 0.4}px Arial`;
+                ctx.font = `${btnH * 0.4}px ${F}`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(hab.emoji, bx + btnW / 2, by + btnH * 0.35);
-                ctx.font = `bold ${btnH * 0.25}px Arial`;
+                ctx.font = `bold ${btnH * 0.25}px ${F}`;
                 ctx.fillText(hab.name, bx + btnW / 2, by + btnH * 0.72);
 
                 this.optionAreas[i] = { x: bx, y: by, w: btnW, h: btnH };
@@ -703,14 +705,14 @@ function generateAnimalChallengeBabyParent() {
             const { x, y, w, h } = area;
 
             // Show the baby large
-            ctx.font = `${h * 0.18}px Arial`;
+            ctx.font = `${h * 0.18}px ${F}`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(correctAnimal.baby, x + w / 2, y + h * 0.25);
 
             // Question
             ctx.fillStyle = '#2c3e50';
-            ctx.font = `bold ${h * 0.07}px Arial`;
+            ctx.font = `bold ${h * 0.07}px ${F}`;
             ctx.fillText(`\u200Fמי האמא?`, x + w / 2, y + h * 0.44);
 
             // Options (3 adult animals)
@@ -732,7 +734,7 @@ function generateAnimalChallengeBabyParent() {
                 ctx.lineWidth = isHover ? 3 : 2;
                 ctx.stroke();
 
-                ctx.font = `${btnSize * 0.5}px Arial`;
+                ctx.font = `${btnSize * 0.5}px ${F}`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(animal.emoji, bx + btnSize / 2, by + btnSize * 0.45);

@@ -5,6 +5,8 @@
 import { DEFENDER_SPRITES } from './sprites.js';
 import { playClick, playStarCollect, playWrong, speak } from './audio.js';
 
+const F = '"Segoe UI", "Trebuchet MS", system-ui, sans-serif';
+
 // ─── Constants (duplicated from game.js to avoid circular imports) ──────────
 
 const CANVAS_W = 960;
@@ -219,7 +221,7 @@ export class Tutorial {
         ctx.lineWidth = 1;
         ctx.stroke();
         ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        ctx.font = 'bold 18px Arial';
+        ctx.font = `bold 18px ${F}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('דלגו', SKIP_BTN.x + SKIP_BTN.w / 2, skipY + SKIP_BTN.h / 2);
@@ -229,7 +231,7 @@ export class Tutorial {
             const blink = Math.sin(this.pulseTime * 3) > 0;
             if (blink) {
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-                ctx.font = '18px Arial';
+                ctx.font = `18px ${F}`;
                 ctx.textAlign = 'center';
                 ctx.fillText('לחצו להמשיך', CANVAS_W / 2, CANVAS_H - 70);
             }
@@ -327,7 +329,7 @@ export class Tutorial {
 
         // Text
         ctx.fillStyle = '#2c3e50';
-        ctx.font = 'bold 20px Arial';
+        ctx.font = `bold 20px ${F}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(step.text, bubbleX + bubbleW / 2, bubbleY + bubbleH / 2);
@@ -349,7 +351,7 @@ export class Tutorial {
         ctx.stroke();
 
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 26px Arial';
+        ctx.font = `bold 26px ${F}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('?', x + size / 2, y + size / 2);
