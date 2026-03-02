@@ -1957,11 +1957,13 @@ class Game {
 
             // Subtle separator between buttons
             if (i > 0) {
+                const prevBtn = this.getDefenderButtonRect(i - 1);
+                const sepX = (prevBtn.x + prevBtn.w + bx) / 2;
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.moveTo(bx - spacing / 2, by + 8);
-                ctx.lineTo(bx - spacing / 2, by + btnSize - 8);
+                ctx.moveTo(sepX, by + 8);
+                ctx.lineTo(sepX, by + btnSize - 8);
                 ctx.stroke();
             }
 

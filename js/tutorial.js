@@ -361,8 +361,7 @@ export class Tutorial {
         if (pos.x >= b.x && pos.x <= b.x + b.size && pos.y >= b.y && pos.y <= b.y + b.size) {
             playClick();
             this.done = false;
-            this._reset(this.game.waveTimer);
-            speak(TUTORIAL_STEPS[0].text);
+            this.start(this.game.waveTimer);
             return true;
         }
         return false;
