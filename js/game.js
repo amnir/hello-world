@@ -12,6 +12,7 @@ import {
     initAudio, playCorrect, playWrong, playStarCollect, playPlace,
     playShoot, playHit, playPop, playClick, playCelebration,
     playWaveStart, playGameOver, startBgMusic, stopBgMusic, speak,
+    playComboSound,
 } from './audio.js';
 
 import { DEFENDER_DEFS, ENEMY_DEFS, LEVELS } from './levels.js';
@@ -119,6 +120,9 @@ class Game {
 
         // Confetti
         this.confetti = [];
+
+        // Combo streak
+        this.comboStreak = 0;
 
         // Input
         this.mouse = { x: 0, y: 0, down: false };
@@ -463,15 +467,35 @@ class Game {
 
         const result = this.activeChallenge.checkAnswer(pos.x, pos.y);
         if (result === 'correct') {
+            this.comboStreak++;
             playCorrect();
             this.challengeResult = 'correct';
             this.challengeResultTimer = 1.2;
-            this.stars += this.pendingStarReward || 2;
+
+            // Combo bonus stars: 3+ streak = +1 bonus, 5+ streak = +2 bonus
+            let baseStars = this.pendingStarReward || 2;
+            if (this.comboStreak >= 5) {
+                baseStars += 2;
+            } else if (this.comboStreak >= 3) {
+                baseStars += 1;
+            }
+            this.stars += baseStars;
+
+            // Combo sound at 3+ streak
+            if (this.comboStreak >= 3) {
+                playComboSound();
+            }
+
+            // Mini confetti at 5+ streak
+            if (this.comboStreak >= 5) {
+                this.spawnMiniConfetti();
+            }
         } else if (result === 'wrong') {
+            this.comboStreak = 0;
             playWrong();
             this.challengeResult = 'wrong';
             this.challengeResultTimer = 1.2;
-            this.stars += 1; // Always give at least 1 star (never punish)
+            this.stars += 1;
         }
     }
 
@@ -570,6 +594,7 @@ class Game {
         this.floatingStars = [];
         this.particles = [];
         this.confetti = [];
+        this.comboStreak = 0;
         this.grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
         this.selectedDefender = null;
         this.dragging = null;
@@ -664,6 +689,22 @@ class Game {
             spawnTime: this.time,
             lifetime: 10, // disappears after 10 seconds
         });
+    }
+
+    spawnMiniConfetti() {
+        for (let i = 0; i < 15; i++) {
+            this.confetti.push({
+                x: CANVAS_W / 2 + (Math.random() - 0.5) * 100,
+                y: CANVAS_H / 2 - 20,
+                vx: (Math.random() - 0.5) * 120,
+                vy: -80 - Math.random() * 100,
+                rotation: Math.random() * Math.PI * 2,
+                rotSpeed: (Math.random() - 0.5) * 5,
+                color: ['#e74c3c', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6', '#e67e22'][Math.floor(Math.random() * 6)],
+                size: 5 + Math.random() * 5,
+                life: 2 + Math.random() * 1.5,
+            });
+        }
     }
 
     // ─── Update Loop ────────────────────────────────────────────────────
@@ -2021,6 +2062,18 @@ class Game {
             this.activeChallenge.render(ctx, { x: popX, y: popY, w: popW, h: popH }, this.time);
         }
 
+        // Show current streak indicator in top-right of popup
+        if (this.activeChallenge && !this.challengeResult && this.comboStreak >= 2) {
+            ctx.fillStyle = 'rgba(231, 76, 60, 0.9)';
+            this.roundRect(ctx, popX + popW - 70, popY + 10, 60, 30, 8);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`\u{1F525} x${this.comboStreak}`, popX + popW - 40, popY + 25);
+        }
+
         // Draw the speaker replay button (top-left of popup, large for kids)
         if (this.activeChallenge && !this.challengeResult) {
             const btnSize = 52;
@@ -2097,11 +2150,35 @@ class Game {
             ctx.textBaseline = 'middle';
 
             if (this.challengeResult === 'correct') {
-                ctx.fillStyle = '#2ecc71';
+                // Variable celebration text by streak tier
+                let celebText, celebColor;
+                if (this.comboStreak >= 5) {
+                    celebText = '\u200Fמדהים!';
+                    celebColor = '#e74c3c';
+                } else if (this.comboStreak >= 3) {
+                    celebText = '\u200Fמצוין!';
+                    celebColor = '#f39c12';
+                } else {
+                    celebText = '\u200Fכל הכבוד!';
+                    celebColor = '#2ecc71';
+                }
+                ctx.fillStyle = celebColor;
                 ctx.font = 'bold 48px Arial';
-                ctx.fillText('\u200Fכל הכבוד!', CANVAS_W / 2, CANVAS_H / 2 - 20);
+                ctx.fillText(celebText, CANVAS_W / 2, CANVAS_H / 2 - 20);
+
+                // Dynamic star count display
+                let starCount = 2;
+                if (this.comboStreak >= 5) starCount = 4;
+                else if (this.comboStreak >= 3) starCount = 3;
                 ctx.font = '24px Arial';
-                ctx.fillText('⭐⭐', CANVAS_W / 2, CANVAS_H / 2 + 30);
+                ctx.fillText('⭐'.repeat(starCount), CANVAS_W / 2, CANVAS_H / 2 + 30);
+
+                // Streak counter when >= 2
+                if (this.comboStreak >= 2) {
+                    ctx.fillStyle = '#e74c3c';
+                    ctx.font = 'bold 28px Arial';
+                    ctx.fillText(`\u{1F525} x${this.comboStreak}!`, CANVAS_W / 2, CANVAS_H / 2 + 70);
+                }
             } else {
                 ctx.fillStyle = '#e67e22';
                 ctx.font = 'bold 40px Arial';
