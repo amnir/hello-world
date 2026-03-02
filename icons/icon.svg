@@ -2,19 +2,92 @@
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#87CEEB"/>
-      <stop offset="100%" stop-color="#98FB98"/>
+      <stop offset="100%" stop-color="#7ec87e"/>
     </linearGradient>
+    <linearGradient id="shield" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3498db"/>
+      <stop offset="100%" stop-color="#2471a3"/>
+    </linearGradient>
+    <linearGradient id="starGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f9e154"/>
+      <stop offset="100%" stop-color="#e8a910"/>
+    </linearGradient>
+    <linearGradient id="roofGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e74c3c"/>
+      <stop offset="100%" stop-color="#a93226"/>
+    </linearGradient>
+    <radialGradient id="windowGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff5cc"/>
+      <stop offset="100%" stop-color="#f9a825"/>
+    </radialGradient>
+    <!-- Maskable safe zone guide: inner 80% = r204 circle -->
   </defs>
-  <!-- Background circle -->
-  <circle cx="256" cy="256" r="256" fill="url(#sky)"/>
-  <!-- Star shape -->
-  <polygon points="256,80 296,192 416,192 320,264 352,384 256,312 160,384 192,264 96,192 216,192"
-           fill="#f1c40f" stroke="#d4ac0d" stroke-width="8"/>
-  <!-- Star face - eyes -->
-  <circle cx="224" cy="220" r="16" fill="#fff"/>
-  <circle cx="288" cy="220" r="16" fill="#fff"/>
-  <circle cx="228" cy="224" r="8" fill="#333"/>
-  <circle cx="292" cy="224" r="8" fill="#333"/>
-  <!-- Star face - smile -->
-  <path d="M 232 260 Q 256 288 280 260" stroke="#333" stroke-width="6" fill="none" stroke-linecap="round"/>
+
+  <!-- Background — fills full square for maskable icon -->
+  <rect width="512" height="512" fill="url(#sky)"/>
+
+  <!-- Ground -->
+  <rect x="0" y="380" width="512" height="132" fill="#6ab86a"/>
+  <rect x="0" y="380" width="512" height="8" fill="#5aaa5a"/>
+
+  <!-- Small clouds -->
+  <g opacity="0.7">
+    <circle cx="90" cy="100" r="30" fill="#fff"/>
+    <circle cx="120" cy="95" r="25" fill="#fff"/>
+    <circle cx="65" cy="98" r="22" fill="#fff"/>
+    <circle cx="100" cy="112" r="20" fill="#fff"/>
+  </g>
+  <g opacity="0.5">
+    <circle cx="410" cy="75" r="24" fill="#fff"/>
+    <circle cx="435" cy="70" r="20" fill="#fff"/>
+    <circle cx="390" cy="73" r="18" fill="#fff"/>
+  </g>
+
+  <!-- Shield shape (main emblem, centered) -->
+  <path d="M 256 110 L 370 160 L 370 280 Q 370 370 256 420 Q 142 370 142 280 L 142 160 Z"
+        fill="url(#shield)" stroke="#1a5276" stroke-width="6" stroke-linejoin="round"/>
+  <!-- Shield inner highlight -->
+  <path d="M 256 125 L 356 170 L 356 278 Q 356 358 256 405 Q 156 358 156 278 L 156 170 Z"
+        fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="3"/>
+
+  <!-- House on the shield -->
+  <!-- House body -->
+  <rect x="218" y="255" width="76" height="65" rx="2" fill="#e8d5b7" stroke="#b8975a" stroke-width="2"/>
+  <!-- Roof -->
+  <polygon points="210,258 256,210 302,258" fill="url(#roofGrad)" stroke="#922b21" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Door -->
+  <rect x="244" y="285" width="24" height="35" rx="3" fill="#8B4513" stroke="#5D2E0C" stroke-width="1.5"/>
+  <!-- Door knob -->
+  <circle cx="263" cy="304" r="2.5" fill="#f1c40f"/>
+  <!-- Window -->
+  <rect x="268" y="265" width="18" height="16" rx="1" fill="url(#windowGlow)" stroke="#8B6914" stroke-width="1.5"/>
+  <line x1="277" y1="265" x2="277" y2="281" stroke="#8B6914" stroke-width="1"/>
+  <line x1="268" y1="273" x2="286" y2="273" stroke="#8B6914" stroke-width="1"/>
+
+  <!-- Big star above the house (the game's star currency) -->
+  <polygon points="256,135 270,175 312,175 278,200 290,240 256,218 222,240 234,200 200,175 242,175"
+           fill="url(#starGrad)" stroke="#d4ac0d" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Star face — eyes -->
+  <circle cx="242" cy="190" r="7" fill="#fff"/>
+  <circle cx="270" cy="190" r="7" fill="#fff"/>
+  <circle cx="244" cy="192" r="3.5" fill="#333"/>
+  <circle cx="272" cy="192" r="3.5" fill="#333"/>
+  <!-- Eye shine -->
+  <circle cx="242" cy="189" r="2" fill="#fff"/>
+  <circle cx="270" cy="189" r="2" fill="#fff"/>
+  <!-- Star face — smile -->
+  <path d="M 248 204 Q 256 214 264 204" stroke="#333" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- Cheeks -->
+  <ellipse cx="237" cy="203" rx="5" ry="3.5" fill="rgba(255,150,150,0.4)"/>
+  <ellipse cx="275" cy="203" rx="5" ry="3.5" fill="rgba(255,150,150,0.4)"/>
+
+  <!-- Small decorative stars in the grass -->
+  <polygon points="120,410 124,420 134,420 126,426 129,436 120,430 111,436 114,426 106,420 116,420"
+           fill="#f1c40f" opacity="0.7"/>
+  <polygon points="390,400 393,407 400,407 394,412 396,419 390,414 384,419 386,412 380,407 387,407"
+           fill="#f1c40f" opacity="0.5"/>
+
+  <!-- Hebrew title text at bottom -->
+  <text x="256" y="468" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold"
+        font-size="36" fill="#2c3e50" stroke="#fff" stroke-width="2" paint-order="stroke">שומרי החוכמה</text>
 </svg>
