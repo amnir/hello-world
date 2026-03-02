@@ -2497,8 +2497,8 @@ class Game {
         for (const t of toggles) {
             if (pos.x >= toggleX && pos.x <= toggleX + toggleW &&
                 pos.y >= t.y && pos.y <= t.y + toggleH) {
-                playClick();
                 t.setter(!t.getter());
+                playClick();
                 this.saveProgress();
                 return;
             }
@@ -2642,10 +2642,10 @@ class Game {
 
     drawGearButton(ctx, x, y, size) {
         ctx.save();
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
         this.roundRect(ctx, x, y, size, size, 10);
         ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
         ctx.lineWidth = 2;
         this.roundRect(ctx, x, y, size, size, 10);
         ctx.stroke();

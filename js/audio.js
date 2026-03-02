@@ -11,7 +11,8 @@ let speechEnabled = true;
 export function setSfxEnabled(v) { sfxEnabled = v; }
 export function setMusicEnabled(v) {
     musicEnabled = v;
-    if (!v) stopBgMusic();
+    if (v) startBgMusic();
+    else stopBgMusic();
 }
 export function setSpeechEnabled(v) { speechEnabled = v; }
 export function getSfxEnabled() { return sfxEnabled; }
