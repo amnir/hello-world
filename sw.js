@@ -1,4 +1,5 @@
-const CACHE_NAME = 'wisdom-defenders-v1';
+// Bump version to force re-cache when files change
+const CACHE_NAME = 'wisdom-defenders-v3';
 const ASSETS = [
     '/',
     '/index.html',
@@ -34,9 +35,17 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// Fetch: cache-first strategy
+// Fetch: stale-while-revalidate — serve from cache instantly, update in background
 self.addEventListener('fetch', (event) => {
     event.respondWith(
-        caches.match(event.request).then((cached) => cached || fetch(event.request))
+        caches.open(CACHE_NAME).then((cache) =>
+            cache.match(event.request).then((cached) => {
+                const fetched = fetch(event.request).then((response) => {
+                    cache.put(event.request, response.clone());
+                    return response;
+                });
+                return cached || fetched;
+            })
+        )
     );
 });

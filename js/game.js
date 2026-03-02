@@ -322,11 +322,12 @@ class Game {
         // Check which level button was clicked
         const levels = LEVELS;
         const cols = 3;
+        const rows = Math.ceil(levels.length / cols);
         const btnW = 120;
-        const btnH = 100;
-        const spacing = 30;
+        const btnH = 75;
+        const spacing = 18;
         const startX = CANVAS_W / 2 - (cols * (btnW + spacing) - spacing) / 2;
-        const startY = 160;
+        const startY = 95;
 
         for (let i = 0; i < levels.length; i++) {
             const c = i % cols;
@@ -351,10 +352,11 @@ class Game {
         }
 
         // My Stickers button
+        const gridBottom = startY + rows * (btnH + spacing);
         const stickerBtnW = 200;
-        const stickerBtnH = 50;
+        const stickerBtnH = 45;
         const stickerBtnX = CANVAS_W / 2 - stickerBtnW / 2;
-        const stickerBtnY = 440;
+        const stickerBtnY = gridBottom + 8;
         if (pos.x >= stickerBtnX && pos.x <= stickerBtnX + stickerBtnW &&
             pos.y >= stickerBtnY && pos.y <= stickerBtnY + stickerBtnH) {
             playClick();
@@ -1310,18 +1312,19 @@ class Game {
 
         // Title
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 36px Arial';
+        ctx.font = 'bold 32px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('בחרו שלב', CANVAS_W / 2, 70);
+        ctx.fillText('בחרו שלב', CANVAS_W / 2, 50);
 
-        // Level buttons
+        // Level buttons — compact grid to fit 10 levels + sticker button
         const cols = 3;
+        const rows = Math.ceil(LEVELS.length / cols);
         const btnW = 120;
-        const btnH = 100;
-        const spacing = 30;
+        const btnH = 75;
+        const spacing = 18;
         const startX = CANVAS_W / 2 - (cols * (btnW + spacing) - spacing) / 2;
-        const startY = 160;
+        const startY = 95;
 
         for (let i = 0; i < LEVELS.length; i++) {
             const c = i % cols;
@@ -1341,12 +1344,12 @@ class Game {
 
             // Level number
             ctx.fillStyle = '#fff';
-            ctx.font = `bold 32px Arial`;
-            ctx.fillText((i + 1).toString(), bx + btnW / 2, by + 35);
+            ctx.font = `bold 28px Arial`;
+            ctx.fillText((i + 1).toString(), bx + btnW / 2, by + 28);
 
             // Level name
-            ctx.font = '14px Arial';
-            ctx.fillText(LEVELS[i].name, bx + btnW / 2, by + 65);
+            ctx.font = '13px Arial';
+            ctx.fillText(LEVELS[i].name, bx + btnW / 2, by + 55);
 
             // Sticker indicator
             const stickerKey = `${i}_${LEVELS[i].stickerReward}`;
@@ -1357,7 +1360,7 @@ class Game {
             // Lock icon for locked levels
             if (!unlocked) {
                 ctx.fillStyle = '#fff';
-                ctx.font = '24px Arial';
+                ctx.font = '22px Arial';
                 ctx.fillText('🔒', bx + btnW / 2, by + btnH / 2);
             }
         }
@@ -1370,11 +1373,12 @@ class Game {
         ctx.font = 'bold 18px Arial';
         ctx.fillText('חזרה', 70, 42);
 
-        // My Stickers button
+        // My Stickers button — placed below the grid
+        const gridBottom = startY + rows * (btnH + spacing);
         const stickerBtnW = 200;
-        const stickerBtnH = 50;
+        const stickerBtnH = 45;
         const stickerBtnX = CANVAS_W / 2 - stickerBtnW / 2;
-        const stickerBtnY = 440;
+        const stickerBtnY = gridBottom + 8;
         ctx.fillStyle = '#f1c40f';
         this.roundRect(ctx, stickerBtnX, stickerBtnY, stickerBtnW, stickerBtnH, 12);
         ctx.fill();
