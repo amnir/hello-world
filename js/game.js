@@ -123,6 +123,7 @@ class Game {
 
         // Combo streak
         this.comboStreak = 0;
+        this.comboStarsAwarded = 0;
 
         // Input
         this.mouse = { x: 0, y: 0, down: false };
@@ -468,28 +469,18 @@ class Game {
         const result = this.activeChallenge.checkAnswer(pos.x, pos.y);
         if (result === 'correct') {
             this.comboStreak++;
+            const tier = this.getComboTier();
             playCorrect();
             this.challengeResult = 'correct';
             this.challengeResultTimer = 1.2;
 
-            // Combo bonus stars: 3+ streak = +1 bonus, 5+ streak = +2 bonus
-            let baseStars = this.pendingStarReward || 2;
-            if (this.comboStreak >= 5) {
-                baseStars += 2;
-            } else if (this.comboStreak >= 3) {
-                baseStars += 1;
-            }
-            this.stars += baseStars;
+            // Award stars: base + combo bonus
+            const baseStars = this.pendingStarReward || 2;
+            this.comboStarsAwarded = baseStars + tier.bonusStars;
+            this.stars += this.comboStarsAwarded;
 
-            // Combo sound at 3+ streak
-            if (this.comboStreak >= 3) {
-                playComboSound();
-            }
-
-            // Mini confetti at 5+ streak
-            if (this.comboStreak >= 5) {
-                this.spawnMiniConfetti();
-            }
+            if (tier.comboSound) playComboSound();
+            if (tier.confetti) this.spawnMiniConfetti();
         } else if (result === 'wrong') {
             this.comboStreak = 0;
             playWrong();
@@ -689,6 +680,15 @@ class Game {
             spawnTime: this.time,
             lifetime: 10, // disappears after 10 seconds
         });
+    }
+
+    getComboTier() {
+        if (this.comboStreak >= 5) {
+            return { text: '\u200Fמדהים!', color: '#e74c3c', bonusStars: 2, comboSound: true, confetti: true };
+        } else if (this.comboStreak >= 3) {
+            return { text: '\u200Fמצוין!', color: '#f39c12', bonusStars: 1, comboSound: true, confetti: false };
+        }
+        return { text: '\u200Fכל הכבוד!', color: '#2ecc71', bonusStars: 0, comboSound: false, confetti: false };
     }
 
     spawnMiniConfetti() {
@@ -2150,28 +2150,14 @@ class Game {
             ctx.textBaseline = 'middle';
 
             if (this.challengeResult === 'correct') {
-                // Variable celebration text by streak tier
-                let celebText, celebColor;
-                if (this.comboStreak >= 5) {
-                    celebText = '\u200Fמדהים!';
-                    celebColor = '#e74c3c';
-                } else if (this.comboStreak >= 3) {
-                    celebText = '\u200Fמצוין!';
-                    celebColor = '#f39c12';
-                } else {
-                    celebText = '\u200Fכל הכבוד!';
-                    celebColor = '#2ecc71';
-                }
-                ctx.fillStyle = celebColor;
+                const tier = this.getComboTier();
+                ctx.fillStyle = tier.color;
                 ctx.font = 'bold 48px Arial';
-                ctx.fillText(celebText, CANVAS_W / 2, CANVAS_H / 2 - 20);
+                ctx.fillText(tier.text, CANVAS_W / 2, CANVAS_H / 2 - 20);
 
-                // Dynamic star count display
-                let starCount = 2;
-                if (this.comboStreak >= 5) starCount = 4;
-                else if (this.comboStreak >= 3) starCount = 3;
+                // Star count — uses actual awarded amount
                 ctx.font = '24px Arial';
-                ctx.fillText('⭐'.repeat(starCount), CANVAS_W / 2, CANVAS_H / 2 + 30);
+                ctx.fillText('⭐'.repeat(this.comboStarsAwarded), CANVAS_W / 2, CANVAS_H / 2 + 30);
 
                 // Streak counter when >= 2
                 if (this.comboStreak >= 2) {
