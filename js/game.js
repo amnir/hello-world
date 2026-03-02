@@ -13,6 +13,8 @@ import {
     playShoot, playHit, playPop, playClick, playCelebration,
     playWaveStart, playGameOver, startBgMusic, stopBgMusic, speak,
     playComboSound,
+    setSfxEnabled, setMusicEnabled, setSpeechEnabled,
+    getSfxEnabled, getMusicEnabled, getSpeechEnabled,
 } from './audio.js';
 
 import { DEFENDER_DEFS, ENEMY_DEFS, LEVELS } from './levels.js';
@@ -52,6 +54,7 @@ const STATE = {
     LEVEL_WON: 'levelWon',
     LEVEL_LOST: 'levelLost',
     STICKER_BOOK: 'stickerBook',
+    SETTINGS: 'settings',
 };
 
 // Pause button dimensions (large for kid-friendly touch targets)
@@ -129,6 +132,9 @@ class Game {
         this.comboStreak = 0;
         this.comboStarsAwarded = 0;
 
+        // Settings
+        this.resetConfirmPending = false;
+
         // Input
         this.mouse = { x: 0, y: 0, down: false };
         this.setupInput();
@@ -148,6 +154,11 @@ class Game {
                 this.earnedStickers = new Set(parsed.stickers || []);
                 this.highestLevel = parsed.highestLevel || 0;
                 this.tutorial.done = !!parsed.tutorialDone;
+                if (parsed.settings) {
+                    setSfxEnabled(parsed.settings.sfx !== false);
+                    setMusicEnabled(parsed.settings.music !== false);
+                    setSpeechEnabled(parsed.settings.speech !== false);
+                }
             } else {
                 this.highestLevel = 0;
             }
@@ -162,6 +173,11 @@ class Game {
                 stickers: [...this.earnedStickers],
                 highestLevel: this.highestLevel,
                 tutorialDone: this.tutorial.done,
+                settings: {
+                    sfx: getSfxEnabled(),
+                    music: getMusicEnabled(),
+                    speech: getSpeechEnabled(),
+                },
             }));
         } catch { /* ignore */ }
     }
@@ -261,6 +277,9 @@ class Game {
                 break;
             case STATE.STICKER_BOOK:
                 this.onStickerBookClick(pos);
+                break;
+            case STATE.SETTINGS:
+                this.onSettingsClick(pos);
                 break;
         }
     }
@@ -380,6 +399,17 @@ class Game {
             pos.y >= stickerBtnY && pos.y <= stickerBtnY + stickerBtnH) {
             playClick();
             this.state = STATE.STICKER_BOOK;
+            return;
+        }
+
+        // Settings gear button (top-right)
+        const gearX = CANVAS_W - 55;
+        const gearY = 15;
+        const gearSize = 48;
+        if (pos.x >= gearX && pos.x <= gearX + gearSize &&
+            pos.y >= gearY && pos.y <= gearY + gearSize) {
+            playClick();
+            this.state = STATE.SETTINGS;
             return;
         }
     }
@@ -1164,6 +1194,9 @@ class Game {
             case STATE.STICKER_BOOK:
                 this.renderStickerBook();
                 break;
+            case STATE.SETTINGS:
+                this.renderSettings();
+                break;
         }
 
         // Always render confetti on top
@@ -1508,6 +1541,9 @@ class Game {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('\u{1F4D6} המדבקות שלי', CANVAS_W / 2, stickerBtnY + stickerBtnH / 2);
+
+        // Settings gear button (top-right)
+        this.drawGearButton(ctx, CANVAS_W - 55, 15, 48);
     }
 
     // ─── Sticker Book ────────────────────────────────────────────────────
@@ -2438,6 +2474,214 @@ class Game {
             drawConfetti(ctx, c.x, c.y, c.size, c.color, c.rotation);
         }
         ctx.globalAlpha = 1;
+    }
+
+    // ─── Settings Screen ─────────────────────────────────────────────────
+
+    onSettingsClick(pos) {
+        const boxW = 400;
+        const boxH = 380;
+        const boxX = (CANVAS_W - boxW) / 2;
+        const boxY = (CANVAS_H - boxH) / 2;
+
+        // Toggle buttons — match renderSettings layout
+        const toggles = [
+            { y: boxY + 100, getter: getSfxEnabled, setter: setSfxEnabled },
+            { y: boxY + 160, getter: getMusicEnabled, setter: setMusicEnabled },
+            { y: boxY + 220, getter: getSpeechEnabled, setter: setSpeechEnabled },
+        ];
+        const toggleW = 70;
+        const toggleH = 36;
+        const toggleX = boxX + 40;
+
+        for (const t of toggles) {
+            if (pos.x >= toggleX && pos.x <= toggleX + toggleW &&
+                pos.y >= t.y && pos.y <= t.y + toggleH) {
+                playClick();
+                t.setter(!t.getter());
+                this.saveProgress();
+                return;
+            }
+        }
+
+        // Reset progress button
+        const resetBtnW = 200;
+        const resetBtnH = 45;
+        const resetBtnX = CANVAS_W / 2 - resetBtnW / 2;
+        const resetBtnY = boxY + boxH - 75;
+        if (pos.x >= resetBtnX && pos.x <= resetBtnX + resetBtnW &&
+            pos.y >= resetBtnY && pos.y <= resetBtnY + resetBtnH) {
+            playClick();
+            if (this.resetConfirmPending) {
+                // Second tap — actually reset
+                this.earnedStickers = new Set();
+                this.highestLevel = 0;
+                this.tutorial.done = false;
+                this.saveProgress();
+                this.resetConfirmPending = false;
+                this.state = STATE.LEVEL_SELECT;
+            } else {
+                this.resetConfirmPending = true;
+            }
+            return;
+        }
+
+        // Back button
+        if (pos.x >= 20 && pos.x <= 120 && pos.y >= 20 && pos.y <= 60) {
+            playClick();
+            this.resetConfirmPending = false;
+            this.state = STATE.LEVEL_SELECT;
+            return;
+        }
+
+        // Tap outside reset clears confirmation
+        this.resetConfirmPending = false;
+    }
+
+    renderSettings() {
+        const ctx = this.ctx;
+
+        // Background (same as level select)
+        const grad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+        grad.addColorStop(0, '#2c3e50');
+        grad.addColorStop(1, '#3498db');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+        // Settings box
+        const boxW = 400;
+        const boxH = 380;
+        const boxX = (CANVAS_W - boxW) / 2;
+        const boxY = (CANVAS_H - boxH) / 2;
+
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+        ctx.shadowBlur = 20;
+        ctx.shadowOffsetY = 5;
+        ctx.fillStyle = '#fff';
+        this.roundRect(ctx, boxX, boxY, boxW, boxH, 24);
+        ctx.fill();
+        ctx.restore();
+        ctx.strokeStyle = '#3498db';
+        ctx.lineWidth = 4;
+        this.roundRect(ctx, boxX, boxY, boxW, boxH, 24);
+        ctx.stroke();
+
+        // Title
+        ctx.fillStyle = '#2c3e50';
+        ctx.font = 'bold 36px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('הגדרות', CANVAS_W / 2, boxY + 45);
+
+        // Toggle rows
+        const toggles = [
+            { label: 'צלילים', enabled: getSfxEnabled(), y: boxY + 100 },
+            { label: 'מוזיקה', enabled: getMusicEnabled(), y: boxY + 160 },
+            { label: 'דיבור', enabled: getSpeechEnabled(), y: boxY + 220 },
+        ];
+
+        const toggleW = 70;
+        const toggleH = 36;
+        const toggleX = boxX + 40;
+
+        for (const t of toggles) {
+            // Label (right-aligned)
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(t.label, boxX + boxW - 40, t.y + toggleH / 2);
+
+            // Toggle track
+            const trackColor = t.enabled ? '#2ecc71' : '#bdc3c7';
+            ctx.fillStyle = trackColor;
+            this.roundRect(ctx, toggleX, t.y, toggleW, toggleH, toggleH / 2);
+            ctx.fill();
+            ctx.strokeStyle = t.enabled ? '#27ae60' : '#95a5a6';
+            ctx.lineWidth = 2;
+            this.roundRect(ctx, toggleX, t.y, toggleW, toggleH, toggleH / 2);
+            ctx.stroke();
+
+            // Toggle knob
+            const knobR = toggleH / 2 - 4;
+            const knobX = t.enabled ? toggleX + toggleW - knobR - 6 : toggleX + knobR + 6;
+            const knobY = t.y + toggleH / 2;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(knobX, knobY, knobR, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        // Reset progress button
+        const resetBtnW = 200;
+        const resetBtnH = 45;
+        const resetBtnX = CANVAS_W / 2 - resetBtnW / 2;
+        const resetBtnY = boxY + boxH - 75;
+        const resetColor = this.resetConfirmPending ? '#c0392b' : '#e74c3c';
+        const resetBorder = this.resetConfirmPending ? '#962d22' : '#c0392b';
+        this.drawButton(ctx, resetBtnX, resetBtnY, resetBtnW, resetBtnH, 12, resetColor, resetBorder);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const resetText = this.resetConfirmPending ? '?בטוח' : 'איפוס התקדמות';
+        ctx.fillText(resetText, CANVAS_W / 2, resetBtnY + resetBtnH / 2);
+
+        // Back button
+        this.drawButton(ctx, 20, 20, 100, 40, 8, '#e74c3c', '#c0392b');
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 18px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('חזרה', 70, 42);
+    }
+
+    drawGearButton(ctx, x, y, size) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+        this.roundRect(ctx, x, y, size, size, 10);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 2;
+        this.roundRect(ctx, x, y, size, size, 10);
+        ctx.stroke();
+
+        // Gear icon
+        const cx = x + size / 2;
+        const cy = y + size / 2;
+        const outerR = size * 0.32;
+        const innerR = size * 0.18;
+        const teeth = 8;
+
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        for (let i = 0; i < teeth; i++) {
+            const a1 = (i / teeth) * Math.PI * 2;
+            const a2 = ((i + 0.35) / teeth) * Math.PI * 2;
+            const a3 = ((i + 0.5) / teeth) * Math.PI * 2;
+            const a4 = ((i + 0.85) / teeth) * Math.PI * 2;
+            if (i === 0) {
+                ctx.moveTo(cx + Math.cos(a1) * outerR, cy + Math.sin(a1) * outerR);
+            } else {
+                ctx.lineTo(cx + Math.cos(a1) * outerR, cy + Math.sin(a1) * outerR);
+            }
+            ctx.lineTo(cx + Math.cos(a2) * outerR, cy + Math.sin(a2) * outerR);
+            ctx.lineTo(cx + Math.cos(a3) * innerR, cy + Math.sin(a3) * innerR);
+            ctx.lineTo(cx + Math.cos(a4) * innerR, cy + Math.sin(a4) * innerR);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+        // Center hole
+        ctx.fillStyle = 'rgba(44, 62, 80, 0.9)';
+        ctx.beginPath();
+        ctx.arc(cx, cy, size * 0.09, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
     }
 
     // ─── Helpers ────────────────────────────────────────────────────────

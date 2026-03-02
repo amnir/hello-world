@@ -4,6 +4,19 @@
 // =============================================================================
 
 let audioCtx = null;
+let sfxEnabled = true;
+let musicEnabled = true;
+let speechEnabled = true;
+
+export function setSfxEnabled(v) { sfxEnabled = v; }
+export function setMusicEnabled(v) {
+    musicEnabled = v;
+    if (!v) stopBgMusic();
+}
+export function setSpeechEnabled(v) { speechEnabled = v; }
+export function getSfxEnabled() { return sfxEnabled; }
+export function getMusicEnabled() { return musicEnabled; }
+export function getSpeechEnabled() { return speechEnabled; }
 
 function getCtx() {
     if (!audioCtx) {
@@ -22,7 +35,8 @@ export function initAudio() {
 
 // ─── Basic Sound Generators ─────────────────────────────────────────────────
 
-function playTone(freq, duration, type = 'sine', volume = 0.15, delay = 0) {
+function playTone(freq, duration, type = 'sine', volume = 0.15, delay = 0, _skipMuteCheck = false) {
+    if (!_skipMuteCheck && !sfxEnabled) return;
     const ctx = getCtx();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -42,6 +56,7 @@ function playTone(freq, duration, type = 'sine', volume = 0.15, delay = 0) {
 }
 
 function playNoise(duration, volume = 0.05, delay = 0) {
+    if (!sfxEnabled) return;
     const ctx = getCtx();
     const bufferSize = ctx.sampleRate * duration;
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
@@ -181,7 +196,7 @@ const MELODY = [
 ];
 
 export function startBgMusic() {
-    if (bgMusicPlaying) return;
+    if (bgMusicPlaying || !musicEnabled) return;
     bgMusicPlaying = true;
 
     let noteIndex = 0;
@@ -192,9 +207,9 @@ export function startBgMusic() {
 
         const note = MELODY[noteIndex % MELODY.length];
         if (note.freq > 0) {
-            playTone(note.freq, note.dur * 0.8, 'sine', 0.04, 0);
+            playTone(note.freq, note.dur * 0.8, 'sine', 0.04, 0, true);
             // Harmony
-            playTone(note.freq * 0.5, note.dur * 0.8, 'sine', 0.02, 0);
+            playTone(note.freq * 0.5, note.dur * 0.8, 'sine', 0.02, 0, true);
         }
 
         noteIndex++;
@@ -217,7 +232,7 @@ export function stopBgMusic() {
 
 /** Speak a Hebrew text aloud using the Web Speech API */
 export function speak(text) {
-    if (!text || !window.speechSynthesis) return;
+    if (!text || !window.speechSynthesis || !speechEnabled) return;
 
     // Cancel any ongoing speech first
     window.speechSynthesis.cancel();
