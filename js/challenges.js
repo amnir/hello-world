@@ -167,7 +167,7 @@ function generateCountingChallenge() {
             // Question mark
             ctx.fillStyle = '#2c3e50';
             ctx.font = `bold ${h * 0.08}px Arial`;
-            ctx.fillText('?כמה', x + w / 2, y + h * 0.52);
+            ctx.fillText('\u200Fכמה?', x + w / 2, y + h * 0.52);
 
             // Answer options (3 big number buttons)
             this.optionAreas = [];
@@ -242,7 +242,7 @@ function generateColorChallenge() {
             ctx.font = `bold ${h * 0.1}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(`?${correctColor.name} איפה`, x + w / 2, y + h * 0.22);
+            ctx.fillText(`\u200Fאיפה ${correctColor.name}?`, x + w / 2, y + h * 0.22);
 
             // Show a big swatch of the target color
             ctx.fillStyle = correctColor.color;
@@ -326,7 +326,7 @@ function generateLetterChallenge() {
             // Instruction: "?איפה האות" (Where is the letter?)
             ctx.fillStyle = '#2c3e50';
             ctx.font = `bold ${h * 0.06}px Arial`;
-            ctx.fillText('?מצאו את האות', x + w / 2, y + h * 0.5);
+            ctx.fillText('\u200Fמצאו את האות?', x + w / 2, y + h * 0.5);
 
             // Answer options: 3 letters in boxes
             this.optionAreas = [];
@@ -401,7 +401,7 @@ function generateShapeChallenge() {
             ctx.font = `bold ${h * 0.06}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('?מצאו את הצורה', x + w / 2, y + h * 0.48);
+            ctx.fillText('\u200Fמצאו את הצורה?', x + w / 2, y + h * 0.48);
 
             // Answer options: 3 shapes
             this.optionAreas = [];
@@ -522,7 +522,7 @@ function generatePatternChallenge() {
             // Instruction
             ctx.fillStyle = '#2c3e50';
             ctx.font = `bold ${h * 0.06}px Arial`;
-            ctx.fillText('?מה הבא', x + w / 2, y + h * 0.5);
+            ctx.fillText('\u200Fמה הבא?', x + w / 2, y + h * 0.5);
 
             // Answer options
             this.optionAreas = [];
