@@ -1347,10 +1347,13 @@ class Game {
         if (this.waveTimer > 0 && this.waveIndex < totalWaves && this.enemies.length === 0 && this.spawnTimers.length === 0) {
             const secs = Math.ceil(this.waveTimer);
             const timerText = `\u200Fהגל הבא בעוד: ${secs}`;
-            ctx.fillStyle = '#f39c12';
             ctx.font = 'bold 18px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 3;
+            ctx.strokeText(timerText, CANVAS_W / 2, CANVAS_H - 30);
+            ctx.fillStyle = '#ffffff';
             ctx.fillText(timerText, CANVAS_W / 2, CANVAS_H - 30);
 
             // Progress bar
