@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Challenge Tester — Wisdom Defenders</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .top-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: #16213e;
+            width: 100%;
+            max-width: 960px;
+            flex-wrap: wrap;
+        }
+        .top-bar label {
+            font-size: 14px;
+            color: #aaa;
+        }
+        .top-bar select, .top-bar button {
+            font-size: 15px;
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            background: #0f3460;
+            color: #eee;
+            cursor: pointer;
+        }
+        .top-bar button:hover { background: #1a5276; }
+        canvas {
+            display: block;
+            background: #2c3e50;
+            cursor: pointer;
+        }
+        .info-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 10px 16px;
+            background: #16213e;
+            width: 100%;
+            max-width: 960px;
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+        .info-bar span { color: #aaa; }
+        .info-bar .result {
+            font-weight: bold;
+            padding: 3px 10px;
+            border-radius: 4px;
+        }
+        .result-correct { background: #27ae60; color: #fff; }
+        .result-wrong { background: #c0392b; color: #fff; }
+        .result-none { background: #555; color: #aaa; }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <label for="type-select">Challenge type:</label>
+    <select id="type-select">
+        <option value="counting">Counting (ספירה)</option>
+        <option value="colors">Colors (צבעים)</option>
+        <option value="letters">Letters (אותיות)</option>
+        <option value="shapes">Shapes (צורות)</option>
+        <option value="patterns">Patterns (דפוסים)</option>
+        <option value="animals">Animals (חיות)</option>
+        <option value="random">Random (אקראי)</option>
+    </select>
+    <button id="btn-new">New Challenge</button>
+    <button id="btn-speak">Speak 🔊</button>
+</div>
+
+<canvas id="canvas" width="960" height="540"></canvas>
+
+<div class="info-bar">
+    <span>Type: <strong id="info-type">—</strong></span>
+    <span>Question: <strong id="info-question">—</strong></span>
+    <span>Result: <strong id="info-result" class="result result-none">—</strong></span>
+</div>
+
+<script type="module">
+import { GENERATORS, generateChallenge } from '../js/challenges.js';
+import { initAudio, speak, playCorrect, playWrong } from '../js/audio.js';
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const typeSelect = document.getElementById('type-select');
+const btnNew = document.getElementById('btn-new');
+const btnSpeak = document.getElementById('btn-speak');
+const infoType = document.getElementById('info-type');
+const infoQuestion = document.getElementById('info-question');
+const infoResult = document.getElementById('info-result');
+
+// Challenge popup area — matches game.js dimensions
+const AREA = { x: 192, y: 81, w: 576, h: 378 };
+
+let challenge = null;
+let audioInitialized = false;
+let animFrame = null;
+
+const ALL_TYPES = Object.keys(GENERATORS);
+
+function ensureAudio() {
+    if (!audioInitialized) {
+        initAudio();
+        audioInitialized = true;
+    }
+}
+
+function newChallenge() {
+    const selected = typeSelect.value;
+    if (selected === 'random') {
+        challenge = generateChallenge(ALL_TYPES);
+    } else {
+        const gen = GENERATORS[selected];
+        challenge = gen();
+    }
+    infoType.textContent = challenge.type;
+    infoQuestion.textContent = challenge.questionText || '—';
+    infoResult.textContent = '—';
+    infoResult.className = 'result result-none';
+
+    // Auto-speak the question
+    if (audioInitialized && challenge.questionText) {
+        speak(challenge.questionText);
+    }
+}
+
+function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw background
+    ctx.fillStyle = '#2c3e50';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (!challenge) {
+        ctx.fillStyle = '#aaa';
+        ctx.font = '24px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Click "New Challenge" to start', canvas.width / 2, canvas.height / 2);
+        animFrame = requestAnimationFrame(render);
+        return;
+    }
+
+    // Draw popup background (matching game style)
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Popup panel
+    const pad = 8;
+    ctx.fillStyle = '#ecf0f1';
+    ctx.beginPath();
+    const r = 16;
+    const px = AREA.x - pad, py = AREA.y - pad;
+    const pw = AREA.w + pad * 2, ph = AREA.h + pad * 2;
+    ctx.moveTo(px + r, py);
+    ctx.lineTo(px + pw - r, py);
+    ctx.quadraticCurveTo(px + pw, py, px + pw, py + r);
+    ctx.lineTo(px + pw, py + ph - r);
+    ctx.quadraticCurveTo(px + pw, py + ph, px + pw - r, py + ph);
+    ctx.lineTo(px + r, py + ph);
+    ctx.quadraticCurveTo(px, py + ph, px, py + ph - r);
+    ctx.lineTo(px, py + r);
+    ctx.quadraticCurveTo(px, py, px + r, py);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = '#bdc3c7';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Render the challenge
+    const time = performance.now() / 1000;
+    challenge.render(ctx, AREA, time);
+
+    animFrame = requestAnimationFrame(render);
+}
+
+function getCanvasPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY,
+    };
+}
+
+canvas.addEventListener('click', (e) => {
+    ensureAudio();
+    if (!challenge) {
+        newChallenge();
+        return;
+    }
+    const pos = getCanvasPos(e);
+    const result = challenge.checkAnswer(pos.x, pos.y);
+    if (result === 'correct') {
+        playCorrect();
+        infoResult.textContent = 'Correct! ✓';
+        infoResult.className = 'result result-correct';
+    } else if (result === 'wrong') {
+        playWrong();
+        infoResult.textContent = 'Wrong ✗';
+        infoResult.className = 'result result-wrong';
+    }
+});
+
+canvas.addEventListener('mousemove', (e) => {
+    if (!challenge) return;
+    const pos = getCanvasPos(e);
+    challenge.handleHover(pos.x, pos.y);
+});
+
+btnNew.addEventListener('click', () => {
+    ensureAudio();
+    newChallenge();
+});
+
+btnSpeak.addEventListener('click', () => {
+    ensureAudio();
+    if (challenge && challenge.questionText) {
+        speak(challenge.questionText);
+    }
+});
+
+typeSelect.addEventListener('change', () => {
+    ensureAudio();
+    newChallenge();
+});
+
+// Start render loop
+render();
+// Generate initial challenge
+newChallenge();
+</script>
+
+</body>
+</html>
