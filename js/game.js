@@ -17,6 +17,7 @@ import {
 
 import { DEFENDER_DEFS, ENEMY_DEFS, LEVELS } from './levels.js';
 import { generateChallenge } from './challenges.js';
+import { Tutorial } from './tutorial.js';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -107,6 +108,9 @@ class Game {
         this.speakerBtnArea = null;   // {x,y,w,h} for the replay-instructions button
         this.speakerBtnHover = false;
 
+        // Tutorial
+        this.tutorial = new Tutorial(this);
+
         // Progression
         this.earnedStickers = new Set();
         this.loadProgress();
@@ -143,6 +147,7 @@ class Game {
                 const parsed = JSON.parse(data);
                 this.earnedStickers = new Set(parsed.stickers || []);
                 this.highestLevel = parsed.highestLevel || 0;
+                this.tutorial.done = !!parsed.tutorialDone;
             } else {
                 this.highestLevel = 0;
             }
@@ -156,6 +161,7 @@ class Game {
             localStorage.setItem('wisdomDefenders', JSON.stringify({
                 stickers: [...this.earnedStickers],
                 highestLevel: this.highestLevel,
+                tutorialDone: this.tutorial.done,
             }));
         } catch { /* ignore */ }
     }
@@ -288,7 +294,11 @@ class Game {
         if (this.state === STATE.PLAYING && this.dragging) {
             const cell = this.screenToGrid(pos.x, pos.y);
             if (cell && !this.grid[cell.row][cell.col]) {
-                this.placeDefender(this.dragging.type, cell.row, cell.col);
+                if (this.tutorial.handlePointerUp(cell, this.dragging.type)) {
+                    // Tutorial handled placement
+                } else {
+                    this.placeDefender(this.dragging.type, cell.row, cell.col);
+                }
             }
             this.dragging = null;
         }
@@ -377,6 +387,15 @@ class Game {
     // ─── Playing Handlers ───────────────────────────────────────────────
 
     onPlayingClick(pos) {
+        // Tutorial interception — all logic delegated to Tutorial class
+        if (this.tutorial.isActive) {
+            this.tutorial.handleClick(pos);
+            return;
+        }
+
+        // Help button check (Level 1 only, after tutorial done)
+        if (this.tutorial.checkHelpButtonClick(pos)) return;
+
         // Check if clicking the pause button
         if (pos.x >= PAUSE_BTN_X && pos.x <= PAUSE_BTN_X + PAUSE_BTN_SIZE &&
             pos.y >= PAUSE_BTN_Y && pos.y <= PAUSE_BTN_Y + PAUSE_BTN_SIZE) {
@@ -423,16 +442,10 @@ class Game {
         if (!this.currentLevel) return;
 
         const defenders = this.currentLevel.availableDefenders;
-        const btnSize = 60;
-        const spacing = 10;
-        const totalW = defenders.length * (btnSize + spacing) - spacing;
-        const startX = CANVAS_W / 2 - totalW / 2;
 
         for (let i = 0; i < defenders.length; i++) {
-            const bx = startX + i * (btnSize + spacing);
-            const by = 15;
-
-            if (pos.x >= bx && pos.x <= bx + btnSize && pos.y >= by && pos.y <= by + btnSize) {
+            const btn = this.getDefenderButtonRect(i);
+            if (pos.x >= btn.x && pos.x <= btn.x + btn.w && pos.y >= btn.y && pos.y <= btn.y + btn.h) {
                 const defId = defenders[i];
                 const def = DEFENDER_DEFS[defId];
 
@@ -598,6 +611,21 @@ class Game {
 
         startBgMusic();
         playWaveStart();
+
+        // Tutorial: activate on first play of Level 1
+        if (index === 0 && !this.tutorial.done) {
+            this.tutorial.start(this.waveTimer);
+        }
+    }
+
+    getDefenderButtonRect(index) {
+        if (!this.currentLevel) return null;
+        const defenders = this.currentLevel.availableDefenders;
+        if (index < 0 || index >= defenders.length) return null;
+        const btnSize = 60, spacing = 10;
+        const totalW = defenders.length * (btnSize + spacing) - spacing;
+        const startX = CANVAS_W / 2 - totalW / 2;
+        return { x: startX + index * (btnSize + spacing), y: 15, w: btnSize, h: btnSize };
     }
 
     placeDefender(type, row, col) {
@@ -724,6 +752,11 @@ class Game {
                     this.speakerBtnArea = null;
                     this.speakerBtnHover = false;
                     this.state = STATE.PLAYING;
+
+                    // Advance tutorial if we were on the star_collected step
+                    if (this.tutorial.isActive && this.tutorial.currentStep.id === 'collect_star') {
+                        this.tutorial.advance();
+                    }
                 }
             }
 
@@ -742,8 +775,16 @@ class Game {
             return;
         }
 
+        // Tutorial: freeze wave timer and update tutorial timers
+        if (this.tutorial.isActive) {
+            this.tutorial.updateTimers(dt);
+        }
+        this.tutorial.updateHelpButton();
+
         // ── Wave management ──
-        this.waveTimer -= dt;
+        if (!this.tutorial.isActive) {
+            this.waveTimer -= dt;
+        }
 
         if (this.waveTimer <= 0 && this.waveIndex < this.currentLevel.waves.length) {
             if (this.waveEnemies.length === 0 && this.spawnTimers.length === 0) {
@@ -1097,6 +1138,9 @@ class Game {
             case STATE.PLAYING:
             case STATE.WAVE_CLEAR:
                 this.renderGame();
+                if (this.state === STATE.PLAYING && this.tutorial.isActive) {
+                    this.tutorial.render();
+                }
                 if (this.state === STATE.WAVE_CLEAR) {
                     this.renderWaveClear();
                 }
@@ -1928,16 +1972,12 @@ class Game {
         // Defender selection bar
         if (!this.currentLevel) return;
         const defenders = this.currentLevel.availableDefenders;
-        const btnSize = 60;
-        const spacing = 10;
-        const totalW = defenders.length * (btnSize + spacing) - spacing;
-        const startX = CANVAS_W / 2 - totalW / 2;
 
         for (let i = 0; i < defenders.length; i++) {
             const defId = defenders[i];
             const def = DEFENDER_DEFS[defId];
-            const bx = startX + i * (btnSize + spacing);
-            const by = 15;
+            const btn = this.getDefenderButtonRect(i);
+            const bx = btn.x, by = btn.y, btnSize = btn.w;
 
             const canAfford = this.stars >= def.cost;
             const isSelected = this.selectedDefender === defId;
@@ -1958,11 +1998,13 @@ class Game {
 
             // Subtle separator between buttons
             if (i > 0) {
+                const prevBtn = this.getDefenderButtonRect(i - 1);
+                const sepX = (prevBtn.x + prevBtn.w + bx) / 2;
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.moveTo(bx - spacing / 2, by + 8);
-                ctx.lineTo(bx - spacing / 2, by + btnSize - 8);
+                ctx.moveTo(sepX, by + 8);
+                ctx.lineTo(sepX, by + btnSize - 8);
                 ctx.stroke();
             }
 
@@ -2016,6 +2058,9 @@ class Game {
             this.roundRect(ctx, barX + barW + gap, barY, barW, barH, 3);
             ctx.fill();
         }
+
+        // Tutorial help button
+        this.tutorial.renderHelpButton();
     }
 
     // ─── Challenge Overlay ──────────────────────────────────────────────
