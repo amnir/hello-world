@@ -23,11 +23,11 @@ const PAUSE_BTN_SIZE = 48;
 // ─── Tutorial Steps ─────────────────────────────────────────────────────────
 
 export const TUTORIAL_STEPS = [
-    { id: 'welcome', text: 'ברוכים הבאים! בואו נלמד לשחק!', speech: 'ברוכים הבאים! בואו נלמד לשחק!', waitFor: 'tap' },
-    { id: 'select_defender', text: 'לחצו על חבר המספרים', speech: 'לחצו על חבר המספרים', waitFor: 'select_numberBuddy' },
-    { id: 'place_defender', text: 'גררו אותו לכאן!', speech: 'גררו אותו לכאן!', waitFor: 'place_defender' },
-    { id: 'collect_star', text: 'לחצו על הכוכב!', speech: 'לחצו על הכוכב!', waitFor: 'star_collected' },
-    { id: 'complete', text: 'מעולה! אתם מוכנים!', speech: 'מעולה! אתם מוכנים!', waitFor: 'tap' },
+    { id: 'welcome', text: 'ברוכים הבאים! בואו נלמד לשחק!', waitFor: 'tap' },
+    { id: 'select_defender', text: 'לחצו על חבר המספרים', waitFor: 'select_numberBuddy' },
+    { id: 'place_defender', text: 'גררו אותו לכאן!', waitFor: 'place_defender' },
+    { id: 'collect_star', text: 'לחצו על הכוכב!', waitFor: 'star_collected' },
+    { id: 'complete', text: 'מעולה! אתם מוכנים!', waitFor: 'tap' },
 ];
 
 // ─── Tutorial Class ─────────────────────────────────────────────────────────
@@ -58,7 +58,7 @@ export class Tutorial {
         this.textTimer = 0;
         this.pulseTime = 0;
         this.savedWaveTimer = waveTimer;
-        speak(TUTORIAL_STEPS[0].speech);
+        speak(TUTORIAL_STEPS[0].text);
     }
 
     advance() {
@@ -72,7 +72,7 @@ export class Tutorial {
             this.game.waveTimer = this.savedWaveTimer;
             return;
         }
-        speak(TUTORIAL_STEPS[this.step].speech);
+        speak(TUTORIAL_STEPS[this.step].text);
     }
 
     skip() {
