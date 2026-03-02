@@ -57,6 +57,14 @@ const PAUSE_BTN_X = CANVAS_W - 55;
 const PAUSE_BTN_Y = HUD_HEIGHT + 12;
 const PAUSE_BTN_SIZE = 48;
 
+const TUTORIAL_STEPS = [
+    { id: 'welcome', text: 'ברוכים הבאים! בואו נלמד לשחק!', speech: 'ברוכים הבאים! בואו נלמד לשחק!', waitFor: 'tap' },
+    { id: 'select_defender', text: 'לחצו על חבר המספרים', speech: 'לחצו על חבר המספרים', waitFor: 'select_numberBuddy' },
+    { id: 'place_defender', text: 'גררו אותו לכאן!', speech: 'גררו אותו לכאן!', waitFor: 'place_defender' },
+    { id: 'collect_star', text: 'לחצו על הכוכב!', speech: 'לחצו על הכוכב!', waitFor: 'star_collected' },
+    { id: 'complete', text: 'מעולה! אתם מוכנים!', speech: 'מעולה! אתם מוכנים!', waitFor: 'tap' },
+];
+
 // ─── Game Class ─────────────────────────────────────────────────────────────
 
 class Game {
@@ -120,6 +128,15 @@ class Game {
         // Confetti
         this.confetti = [];
 
+        // Tutorial
+        this.tutorialActive = false;
+        this.tutorialStep = 0;
+        this.tutorialTextTimer = 0;
+        this.tutorialPulseTime = 0;
+        this.tutorialDone = false;
+        this.tutorialSavedWaveTimer = 0;
+        this.tutorialHelpBtnArea = null;
+
         // Input
         this.mouse = { x: 0, y: 0, down: false };
         this.setupInput();
@@ -138,6 +155,7 @@ class Game {
                 const parsed = JSON.parse(data);
                 this.earnedStickers = new Set(parsed.stickers || []);
                 this.highestLevel = parsed.highestLevel || 0;
+                this.tutorialDone = !!parsed.tutorialDone;
             } else {
                 this.highestLevel = 0;
             }
@@ -151,6 +169,7 @@ class Game {
             localStorage.setItem('wisdomDefenders', JSON.stringify({
                 stickers: [...this.earnedStickers],
                 highestLevel: this.highestLevel,
+                tutorialDone: this.tutorialDone,
             }));
         } catch { /* ignore */ }
     }
@@ -283,7 +302,15 @@ class Game {
         if (this.state === STATE.PLAYING && this.dragging) {
             const cell = this.screenToGrid(pos.x, pos.y);
             if (cell && !this.grid[cell.row][cell.col]) {
-                this.placeDefender(this.dragging.type, cell.row, cell.col);
+                // Tutorial: restrict placement to target cell (row 1, col 3)
+                if (this.tutorialActive && TUTORIAL_STEPS[this.tutorialStep].id === 'place_defender') {
+                    if (cell.row === 1 && cell.col === 3) {
+                        this.placeDefender(this.dragging.type, cell.row, cell.col);
+                        this.advanceTutorial();
+                    }
+                } else {
+                    this.placeDefender(this.dragging.type, cell.row, cell.col);
+                }
             }
             this.dragging = null;
         }
@@ -372,6 +399,91 @@ class Game {
     // ─── Playing Handlers ───────────────────────────────────────────────
 
     onPlayingClick(pos) {
+        // Tutorial interception
+        if (this.tutorialActive) {
+            const step = TUTORIAL_STEPS[this.tutorialStep];
+
+            // Skip button check (bottom-left)
+            const skipW = 80, skipH = 36;
+            const skipX = 15, skipY = CANVAS_H - skipH - 15;
+            if (pos.x >= skipX && pos.x <= skipX + skipW && pos.y >= skipY && pos.y <= skipY + skipH) {
+                playClick();
+                this.skipTutorial();
+                return;
+            }
+
+            if (step.waitFor === 'tap') {
+                playClick();
+                this.advanceTutorial();
+                return;
+            }
+
+            if (step.waitFor === 'select_numberBuddy') {
+                // Only allow HUD clicks, and only on numberBuddy
+                if (pos.y < HUD_HEIGHT) {
+                    // Find the numberBuddy button position
+                    const defenders = this.currentLevel.availableDefenders;
+                    const btnSize = 60, spacing = 10;
+                    const totalW = defenders.length * (btnSize + spacing) - spacing;
+                    const startX = CANVAS_W / 2 - totalW / 2;
+                    const nbIndex = defenders.indexOf('numberBuddy');
+                    if (nbIndex >= 0) {
+                        const bx = startX + nbIndex * (btnSize + spacing);
+                        const by = 15;
+                        if (pos.x >= bx && pos.x <= bx + btnSize && pos.y >= by && pos.y <= by + btnSize) {
+                            this.selectedDefender = 'numberBuddy';
+                            playClick();
+                            this.advanceTutorial();
+                        }
+                    }
+                }
+                return;
+            }
+
+            if (step.waitFor === 'place_defender') {
+                // Allow starting a drag if defender is selected
+                if (this.selectedDefender === 'numberBuddy') {
+                    this.dragging = { type: 'numberBuddy', x: pos.x, y: pos.y };
+                }
+                return;
+            }
+
+            if (step.waitFor === 'star_collected') {
+                // Only allow star clicks
+                for (let i = this.floatingStars.length - 1; i >= 0; i--) {
+                    const star = this.floatingStars[i];
+                    const dx = pos.x - star.x;
+                    const dy = pos.y - star.y;
+                    if (dx * dx + dy * dy < 600) {
+                        this.floatingStars.splice(i, 1);
+                        playStarCollect();
+                        this.pendingStarReward = 2;
+                        this.showChallenge();
+                        return;
+                    }
+                }
+                return;
+            }
+
+            return; // Block all other input during tutorial
+        }
+
+        // Help button check (Level 1 only, after tutorial done)
+        if (this.tutorialHelpBtnArea) {
+            const b = this.tutorialHelpBtnArea;
+            if (pos.x >= b.x && pos.x <= b.x + b.size && pos.y >= b.y && pos.y <= b.y + b.size) {
+                playClick();
+                this.tutorialDone = false;
+                this.tutorialActive = true;
+                this.tutorialStep = 0;
+                this.tutorialTextTimer = 0;
+                this.tutorialPulseTime = 0;
+                this.tutorialSavedWaveTimer = this.waveTimer;
+                speak(TUTORIAL_STEPS[0].speech);
+                return;
+            }
+        }
+
         // Check if clicking the pause button
         if (pos.x >= PAUSE_BTN_X && pos.x <= PAUSE_BTN_X + PAUSE_BTN_SIZE &&
             pos.y >= PAUSE_BTN_Y && pos.y <= PAUSE_BTN_Y + PAUSE_BTN_SIZE) {
@@ -582,6 +694,38 @@ class Game {
 
         startBgMusic();
         playWaveStart();
+
+        // Tutorial: activate on first play of Level 1
+        if (index === 0 && !this.tutorialDone) {
+            this.tutorialActive = true;
+            this.tutorialStep = 0;
+            this.tutorialTextTimer = 0;
+            this.tutorialPulseTime = 0;
+            this.tutorialSavedWaveTimer = this.waveTimer;
+            speak(TUTORIAL_STEPS[0].speech);
+        }
+    }
+
+    advanceTutorial() {
+        this.tutorialStep++;
+        this.tutorialTextTimer = 0;
+        this.tutorialPulseTime = 0;
+        if (this.tutorialStep >= TUTORIAL_STEPS.length) {
+            // Tutorial complete
+            this.tutorialActive = false;
+            this.tutorialDone = true;
+            this.saveProgress();
+            this.waveTimer = this.tutorialSavedWaveTimer;
+            return;
+        }
+        speak(TUTORIAL_STEPS[this.tutorialStep].speech);
+    }
+
+    skipTutorial() {
+        this.tutorialActive = false;
+        this.tutorialDone = true;
+        this.saveProgress();
+        this.waveTimer = this.tutorialSavedWaveTimer;
     }
 
     placeDefender(type, row, col) {
@@ -683,6 +827,11 @@ class Game {
                     this.speakerBtnArea = null;
                     this.speakerBtnHover = false;
                     this.state = STATE.PLAYING;
+
+                    // Advance tutorial if we were on the star_collected step
+                    if (this.tutorialActive && TUTORIAL_STEPS[this.tutorialStep].id === 'collect_star') {
+                        this.advanceTutorial();
+                    }
                 }
             }
 
@@ -701,8 +850,28 @@ class Game {
             return;
         }
 
+        // Tutorial: freeze wave timer and update tutorial timers
+        if (this.tutorialActive) {
+            this.tutorialTextTimer += dt;
+            this.tutorialPulseTime += dt;
+
+            // Force-spawn a star when on collect_star step and no stars exist
+            if (TUTORIAL_STEPS[this.tutorialStep].id === 'collect_star' && this.floatingStars.length === 0) {
+                // Spawn near the center of the grid
+                const targetPos = this.gridToScreen(1, 3);
+                this.floatingStars.push({
+                    x: targetPos.x,
+                    y: targetPos.y - 40,
+                    spawnTime: this.time,
+                    lifetime: 999,
+                });
+            }
+        }
+
         // ── Wave management ──
-        this.waveTimer -= dt;
+        if (!this.tutorialActive) {
+            this.waveTimer -= dt;
+        }
 
         if (this.waveTimer <= 0 && this.waveIndex < this.currentLevel.waves.length) {
             if (this.waveEnemies.length === 0 && this.spawnTimers.length === 0) {
@@ -1056,6 +1225,9 @@ class Game {
             case STATE.PLAYING:
             case STATE.WAVE_CLEAR:
                 this.renderGame();
+                if (this.state === STATE.PLAYING && this.tutorialActive) {
+                    this.renderTutorial();
+                }
                 if (this.state === STATE.WAVE_CLEAR) {
                     this.renderWaveClear();
                 }
@@ -1975,6 +2147,183 @@ class Game {
             this.roundRect(ctx, barX + barW + gap, barY, barW, barH, 3);
             ctx.fill();
         }
+
+        // Tutorial help button ("?") — Level 1 only, after tutorial done
+        if (this.currentLevelIndex === 0 && this.tutorialDone && this.state === STATE.PLAYING) {
+            const helpSize = 40;
+            const helpX = PAUSE_BTN_X + (PAUSE_BTN_SIZE - helpSize) / 2;
+            const helpY = PAUSE_BTN_Y + PAUSE_BTN_SIZE + 8;
+            this.tutorialHelpBtnArea = { x: helpX, y: helpY, size: helpSize };
+
+            ctx.fillStyle = 'rgba(52, 152, 219, 0.75)';
+            this.roundRect(ctx, helpX, helpY, helpSize, helpSize, 10);
+            ctx.fill();
+            ctx.strokeStyle = '#2980b9';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('?', helpX + helpSize / 2, helpY + helpSize / 2);
+        } else {
+            this.tutorialHelpBtnArea = null;
+        }
+    }
+
+    // ─── Tutorial Overlay ─────────────────────────────────────────────
+
+    renderTutorial() {
+        if (!this.tutorialActive) return;
+        const ctx = this.ctx;
+        const step = TUTORIAL_STEPS[this.tutorialStep];
+
+        // Dark overlay
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+        // Highlight cutout for current step target
+        this.renderTutorialHighlight(step);
+
+        // Speech bubble with Star Maker
+        this.renderTutorialBubble(step);
+
+        // Skip button (bottom-left)
+        const skipW = 80, skipH = 36;
+        const skipX = 15, skipY = CANVAS_H - skipH - 15;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        this.roundRect(ctx, skipX, skipY, skipW, skipH, 8);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('דלגו', skipX + skipW / 2, skipY + skipH / 2);
+
+        // "Tap to continue" hint for tap steps
+        if (step.waitFor === 'tap') {
+            const blink = Math.sin(this.tutorialPulseTime * 3) > 0;
+            if (blink) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.font = '18px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('לחצו להמשיך', CANVAS_W / 2, CANVAS_H - 60);
+            }
+        }
+    }
+
+    renderTutorialHighlight(step) {
+        const ctx = this.ctx;
+        const pulse = 1 + Math.sin(this.tutorialPulseTime * 4) * 0.08;
+
+        let targetRect = null;
+
+        if (step.id === 'select_defender') {
+            // Highlight the numberBuddy HUD button
+            const defenders = this.currentLevel.availableDefenders;
+            const btnSize = 60, spacing = 10;
+            const totalW = defenders.length * (btnSize + spacing) - spacing;
+            const startX = CANVAS_W / 2 - totalW / 2;
+            const nbIndex = defenders.indexOf('numberBuddy');
+            if (nbIndex >= 0) {
+                const bx = startX + nbIndex * (btnSize + spacing);
+                targetRect = { x: bx - 4, y: 11, w: btnSize + 8, h: btnSize + 8 };
+            }
+        } else if (step.id === 'place_defender') {
+            // Highlight target grid cell (row 1, col 3)
+            const cx = GRID_LEFT + 3 * CELL_W;
+            const cy = GRID_TOP + 1 * CELL_H;
+            targetRect = { x: cx, y: cy, w: CELL_W, h: CELL_H };
+        } else if (step.id === 'collect_star') {
+            // Highlight the first floating star
+            if (this.floatingStars.length > 0) {
+                const star = this.floatingStars[0];
+                targetRect = { x: star.x - 25, y: star.y - 25, w: 50, h: 50 };
+            }
+        }
+
+        if (targetRect) {
+            // Cutout effect: clear the overlay in the target area
+            const pad = 6 * pulse;
+            const rx = targetRect.x - pad;
+            const ry = targetRect.y - pad;
+            const rw = targetRect.w + pad * 2;
+            const rh = targetRect.h + pad * 2;
+
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.fillStyle = 'rgba(0, 0, 0, 1)';
+            this.roundRect(ctx, rx, ry, rw, rh, 12);
+            ctx.fill();
+            ctx.restore();
+
+            // Pulsing gold dashed border
+            ctx.strokeStyle = '#f1c40f';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([8, 4]);
+            ctx.lineDashOffset = -this.tutorialPulseTime * 20;
+            this.roundRect(ctx, rx, ry, rw, rh, 12);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+    }
+
+    renderTutorialBubble(step) {
+        const ctx = this.ctx;
+
+        // Star Maker character at bottom-right
+        const charX = CANVAS_W - 80;
+        const charY = CANVAS_H - 100;
+
+        // Draw Star Maker character
+        DEFENDER_SPRITES.starMaker(ctx, charX, charY, 35, this.time);
+
+        // Speech bubble
+        const bubbleW = 280;
+        const bubbleH = 60;
+        const bubbleX = charX - bubbleW - 20;
+        const bubbleY = charY - bubbleH / 2;
+
+        // Fade-in text
+        const alpha = Math.min(1, this.tutorialTextTimer * 2);
+        ctx.globalAlpha = alpha;
+
+        // White bubble background
+        ctx.fillStyle = '#fff';
+        this.roundRect(ctx, bubbleX, bubbleY, bubbleW, bubbleH, 14);
+        ctx.fill();
+        ctx.strokeStyle = '#3498db';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Tail pointing to character
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.moveTo(bubbleX + bubbleW, bubbleY + bubbleH / 2 - 8);
+        ctx.lineTo(bubbleX + bubbleW + 15, bubbleY + bubbleH / 2);
+        ctx.lineTo(bubbleX + bubbleW, bubbleY + bubbleH / 2 + 8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#3498db';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(bubbleX + bubbleW, bubbleY + bubbleH / 2 - 8);
+        ctx.lineTo(bubbleX + bubbleW + 15, bubbleY + bubbleH / 2);
+        ctx.lineTo(bubbleX + bubbleW, bubbleY + bubbleH / 2 + 8);
+        ctx.stroke();
+
+        // Text
+        ctx.fillStyle = '#2c3e50';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(step.text, bubbleX + bubbleW / 2, bubbleY + bubbleH / 2);
+
+        ctx.globalAlpha = 1;
     }
 
     // ─── Challenge Overlay ──────────────────────────────────────────────
