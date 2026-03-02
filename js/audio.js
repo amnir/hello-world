@@ -232,7 +232,6 @@ export function stopBgMusic() {
 // ─── Speech Synthesis (Text-to-Speech) ─────────────────────────────────────
 
 let cachedHebrewVoice = null;
-let voicesLoaded = false;
 
 /** Score a Hebrew voice — higher is better */
 function scoreVoice(v) {
@@ -263,7 +262,6 @@ function pickBestHebrewVoice() {
 if (typeof window !== 'undefined' && window.speechSynthesis) {
     const loadVoices = () => {
         cachedHebrewVoice = pickBestHebrewVoice();
-        voicesLoaded = true;
     };
     loadVoices();
     window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
