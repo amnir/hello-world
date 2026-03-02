@@ -29,6 +29,9 @@ import {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
+// Font stack: Segoe UI for Windows, system-ui for modern browsers, fallback chain
+const F = '"Segoe UI", "Trebuchet MS", system-ui, sans-serif';
+
 const HOUSE_X = GRID_RIGHT;
 const HOUSE_W = CANVAS_W - GRID_RIGHT;
 
@@ -1291,7 +1294,7 @@ class Game {
         ctx.scale(titleScale, titleScale);
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.font = 'bold 52px Arial';
+        ctx.font = `bold 52px ${F}`;
         // Outer glow
         ctx.shadowColor = 'rgba(241, 196, 15, 0.5)';
         ctx.shadowBlur = 15;
@@ -1319,7 +1322,7 @@ class Game {
         ctx.textBaseline = 'middle';
         // Drop shadow
         ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-        ctx.font = '24px Arial';
+        ctx.font = `24px ${F}`;
         ctx.fillText('Wisdom Defenders', CANVAS_W / 2 + 2, subY + 2);
         // Main subtitle
         ctx.fillStyle = '#5d6d7e';
@@ -1352,11 +1355,10 @@ class Game {
         this.drawButton(ctx, btnX, btnY, 160, 60, 15, '#2ecc71', '#27ae60');
         ctx.restore();
 
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 28px Arial';
+        ctx.font = `bold 28px ${F}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('\u200Fבואו נשחק!', CANVAS_W / 2, btnY + 30);
+        this.drawOutlinedText(ctx, '\u200Fבואו נשחק!', CANVAS_W / 2, btnY + 30, '#fff', '#1a7a42', 3);
 
         // ── Wandering Enemies ──
         const enemies = [
@@ -1443,11 +1445,10 @@ class Game {
         }
 
         // Title
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 32px Arial';
+        ctx.font = `bold 34px ${F}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('בחרו שלב', CANVAS_W / 2, 50);
+        this.drawGlowText(ctx, 'בחרו שלב', CANVAS_W / 2, 50, '#fff', 'rgba(52, 152, 219, 0.7)', 15);
 
         // Level buttons — compact grid to fit 10 levels + sticker button
         const cols = 3;
@@ -1474,13 +1475,12 @@ class Game {
             }
 
             // Level number
-            ctx.fillStyle = '#fff';
-            ctx.font = `bold 28px Arial`;
-            ctx.fillText((i + 1).toString(), bx + btnW / 2, by + 28);
+            ctx.font = `bold 28px ${F}`;
+            this.drawOutlinedText(ctx, (i + 1).toString(), bx + btnW / 2, by + 28, '#fff', 'rgba(0,0,0,0.3)', 3);
 
             // Level name
-            ctx.font = '13px Arial';
-            ctx.fillText(LEVELS[i].name, bx + btnW / 2, by + 55);
+            ctx.font = `13px ${F}`;
+            this.drawOutlinedText(ctx, LEVELS[i].name, bx + btnW / 2, by + 55, '#fff', 'rgba(0,0,0,0.25)', 2);
 
             // Sticker indicator
             const stickerKey = `${i}_${LEVELS[i].stickerReward}`;
@@ -1491,7 +1491,7 @@ class Game {
             // Lock icon for locked levels
             if (!unlocked) {
                 ctx.fillStyle = '#fff';
-                ctx.font = '22px Arial';
+                ctx.font = `22px ${F}`;
                 ctx.fillText('🔒', bx + btnW / 2, by + btnH / 2);
             }
         }
@@ -1499,7 +1499,7 @@ class Game {
         // Back button
         this.drawButton(ctx, 20, 20, 100, 40, 8, '#e74c3c', '#c0392b');
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 18px Arial';
+        ctx.font = `bold 18px ${F}`;
         ctx.fillText('חזרה', 70, 42);
 
         // My Stickers button — placed below the grid
@@ -1510,7 +1510,7 @@ class Game {
         const stickerBtnY = gridBottom + 8;
         this.drawButton(ctx, stickerBtnX, stickerBtnY, stickerBtnW, stickerBtnH, 12, '#f1c40f', '#d4ac0d');
         ctx.fillStyle = '#2c3e50';
-        ctx.font = 'bold 22px Arial';
+        ctx.font = `bold 22px ${F}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('\u{1F4D6} המדבקות שלי', CANVAS_W / 2, stickerBtnY + stickerBtnH / 2);
@@ -1538,17 +1538,16 @@ class Game {
         ctx.stroke();
 
         // Title
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 32px Arial';
+        ctx.font = `bold 34px ${F}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('\u{1F4D6} \u05D0\u05D5\u05E1\u05E3 \u05D4\u05DE\u05D3\u05D1\u05E7\u05D5\u05EA', CANVAS_W / 2, 55);
+        this.drawGlowText(ctx, '\u{1F4D6} \u05D0\u05D5\u05E1\u05E3 \u05D4\u05DE\u05D3\u05D1\u05E7\u05D5\u05EA', CANVAS_W / 2, 55, '#fff', 'rgba(241, 196, 15, 0.5)', 12);
 
         // Progress counter
         const earned = this.earnedStickers.size;
         const total = LEVELS.length;
         ctx.fillStyle = '#f1c40f';
-        ctx.font = '20px Arial';
+        ctx.font = `20px ${F}`;
         ctx.fillText(`${earned}/${total} \u05DE\u05D3\u05D1\u05E7\u05D5\u05EA`, CANVAS_W / 2, 85);
 
         // Sticker grid — 3 columns
@@ -1585,12 +1584,12 @@ class Game {
 
             // Level number
             ctx.fillStyle = isEarned ? '#fff' : '#7f8c8d';
-            ctx.font = 'bold 14px Arial';
+            ctx.font = `bold 14px ${F}`;
             ctx.textAlign = 'center';
             ctx.fillText(`\u05E9\u05DC\u05D1 ${i + 1}`, cx, cy + 45);
 
             // Sticker type name
-            ctx.font = '12px Arial';
+            ctx.font = `12px ${F}`;
             ctx.fillText(LEVELS[i].stickerReward, cx, cy + 62);
         }
 
@@ -1602,7 +1601,7 @@ class Game {
             const shareBtnY = 400;
             this.drawButton(ctx, shareBtnX, shareBtnY, shareBtnW, shareBtnH, 12, '#2ecc71', '#27ae60');
             ctx.fillStyle = '#fff';
-            ctx.font = 'bold 22px Arial';
+            ctx.font = `bold 22px ${F}`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('\u{1F4E4} \u05E9\u05EA\u05E4\u05D5!', CANVAS_W / 2, shareBtnY + shareBtnH / 2);
@@ -1611,7 +1610,7 @@ class Game {
         // Back button
         this.drawButton(ctx, 20, 20, 100, 40, 8, '#e74c3c', '#c0392b');
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 18px Arial';
+        ctx.font = `bold 18px ${F}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('\u05D7\u05D6\u05E8\u05D4', 70, 42);
@@ -1662,14 +1661,14 @@ class Game {
 
         // Title
         offCtx.fillStyle = '#2c3e50';
-        offCtx.font = 'bold 48px Arial';
+        offCtx.font = `bold 48px ${F}`;
         offCtx.textAlign = 'center';
         offCtx.textBaseline = 'middle';
         offCtx.fillText('\u05E9\u05D5\u05DE\u05E8\u05D9 \u05D4\u05D7\u05D5\u05DB\u05DE\u05D4', 400, 80);
 
         // Subtitle
         offCtx.fillStyle = '#e67e22';
-        offCtx.font = 'bold 32px Arial';
+        offCtx.font = `bold 32px ${F}`;
         offCtx.fillText('\u{1F31F} \u05D0\u05D5\u05E1\u05E3 \u05D4\u05DE\u05D3\u05D1\u05E7\u05D5\u05EA \u05E9\u05DC\u05D9 \u{1F31F}', 400, 140);
 
         // Draw earned stickers in a row, centered
@@ -1719,12 +1718,12 @@ class Game {
 
         // Progress text
         offCtx.fillStyle = '#2c3e50';
-        offCtx.font = 'bold 20px Arial';
+        offCtx.font = `bold 20px ${F}`;
         offCtx.fillText(`${this.earnedStickers.size}/${LEVELS.length}`, 400, barY + barH + 30);
 
         // Footer
         offCtx.fillStyle = '#7f8c8d';
-        offCtx.font = '22px Arial';
+        offCtx.font = `22px ${F}`;
         offCtx.fillText('Wisdom Defenders \u{1F3AE}', 400, 540);
 
         // Share or download
@@ -1930,30 +1929,27 @@ class Game {
 
         // Star count (top right because RTL)
         drawCollectStar(ctx, CANVAS_W - 40, 20, 14, this.time);
-        ctx.fillStyle = '#f1c40f';
-        ctx.font = 'bold 24px Arial';
+        ctx.font = `bold 24px ${F}`;
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
-        ctx.fillText(this.stars.toString(), CANVAS_W - 60, 22);
+        this.drawOutlinedText(ctx, this.stars.toString(), CANVAS_W - 60, 22, '#f1c40f', 'rgba(0,0,0,0.4)', 3);
 
         // Wave indicator (top left)
-        ctx.fillStyle = '#ecf0f1';
-        ctx.font = '16px Arial';
+        ctx.font = `bold 16px ${F}`;
         ctx.textAlign = 'left';
         const totalWaves = this.currentLevel?.waves.length || 0;
-        ctx.fillText(`גל ${this.waveIndex}/${totalWaves}`, 15, 22);
+        this.drawOutlinedText(ctx, `גל ${this.waveIndex}/${totalWaves}`, 15, 22, '#ecf0f1', 'rgba(0,0,0,0.4)', 2);
 
         // Level name
-        ctx.fillStyle = '#ecf0f1';
-        ctx.font = '14px Arial';
+        ctx.font = `14px ${F}`;
         ctx.textAlign = 'left';
-        ctx.fillText(this.currentLevel?.name || '', 15, 45);
+        this.drawOutlinedText(ctx, this.currentLevel?.name || '', 15, 45, '#ecf0f1', 'rgba(0,0,0,0.3)', 2);
 
         // Wave countdown timer
         if (this.waveTimer > 0 && this.waveIndex < totalWaves && this.enemies.length === 0 && this.spawnTimers.length === 0) {
             const secs = Math.ceil(this.waveTimer);
             const timerText = `\u200Fהגל הבא בעוד: ${secs}`;
-            ctx.font = 'bold 18px Arial';
+            ctx.font = `bold 18px ${F}`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.strokeStyle = '#000000';
@@ -2028,13 +2024,13 @@ class Game {
             // Cost
             if (def.cost > 0) {
                 ctx.fillStyle = canAfford ? '#f1c40f' : '#7f8c8d';
-                ctx.font = 'bold 12px Arial';
+                ctx.font = `bold 12px ${F}`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'bottom';
                 ctx.fillText(`⭐${def.cost}`, bx + btnSize / 2, by + btnSize - 2);
             } else {
                 ctx.fillStyle = '#2ecc71';
-                ctx.font = 'bold 10px Arial';
+                ctx.font = `bold 10px ${F}`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'bottom';
                 ctx.fillText('חינם', bx + btnSize / 2, by + btnSize - 2);
@@ -2122,7 +2118,7 @@ class Game {
             this.roundRect(ctx, popX + popW - 70, popY + 10, 60, 30, 8);
             ctx.fill();
             ctx.fillStyle = '#fff';
-            ctx.font = 'bold 16px Arial';
+            ctx.font = `bold 16px ${F}`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(`\u{1F525} x${this.comboStreak}`, popX + popW - 40, popY + 25);
@@ -2157,7 +2153,7 @@ class Game {
 
             // Draw speaker icon programmatically (white on blue)
             ctx.save();
-            ctx.translate(cx, cy);
+            ctx.translate(cx - btnSize * 0.1, cy);
             const s = btnSize * 0.22; // scale unit
 
             // Speaker body: back plate + horn expanding to the right
@@ -2205,25 +2201,25 @@ class Game {
 
             if (this.challengeResult === 'correct') {
                 const tier = this.getComboTier();
-                ctx.fillStyle = tier.color;
-                ctx.font = 'bold 48px Arial';
-                ctx.fillText(tier.text, CANVAS_W / 2, CANVAS_H / 2 - 20);
+                ctx.font = `bold 52px ${F}`;
+                const glowAlpha = tier.color.startsWith('#') ? tier.color + '99' : 'rgba(46, 204, 113, 0.6)';
+                this.drawGlowText(ctx, tier.text, CANVAS_W / 2, CANVAS_H / 2 - 20, tier.color, glowAlpha, 18);
 
                 // Star count — uses actual awarded amount
-                ctx.font = '24px Arial';
+                ctx.font = `28px ${F}`;
+                ctx.fillStyle = '#f1c40f';
                 ctx.fillText('⭐'.repeat(this.comboStarsAwarded), CANVAS_W / 2, CANVAS_H / 2 + 30);
 
                 // Streak counter when >= 2
                 if (this.comboStreak >= 2) {
-                    ctx.fillStyle = '#e74c3c';
-                    ctx.font = 'bold 28px Arial';
-                    ctx.fillText(`\u{1F525} x${this.comboStreak}!`, CANVAS_W / 2, CANVAS_H / 2 + 70);
+                    ctx.font = `bold 30px ${F}`;
+                    this.drawGlowText(ctx, `\u{1F525} x${this.comboStreak}!`, CANVAS_W / 2, CANVAS_H / 2 + 70, '#e74c3c', 'rgba(231, 76, 60, 0.6)', 12);
                 }
             } else {
-                ctx.fillStyle = '#e67e22';
-                ctx.font = 'bold 40px Arial';
-                ctx.fillText('\u200Fניסיון יפה!', CANVAS_W / 2, CANVAS_H / 2 - 20);
-                ctx.font = '24px Arial';
+                ctx.font = `bold 44px ${F}`;
+                this.drawGlowText(ctx, '\u200Fניסיון יפה!', CANVAS_W / 2, CANVAS_H / 2 - 20, '#e67e22', 'rgba(230, 126, 34, 0.5)', 15);
+                ctx.font = `28px ${F}`;
+                ctx.fillStyle = '#f1c40f';
                 ctx.fillText('⭐', CANVAS_W / 2, CANVAS_H / 2 + 30);
             }
         }
@@ -2236,14 +2232,10 @@ class Game {
         ctx.fillStyle = 'rgba(46, 204, 113, 0.3)';
         ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 36px Arial';
+        ctx.font = `bold 42px ${F}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.strokeStyle = '#27ae60';
-        ctx.lineWidth = 3;
-        ctx.strokeText('\u200Fהגל עבר!', CANVAS_W / 2, CANVAS_H / 2);
-        ctx.fillText('\u200Fהגל עבר!', CANVAS_W / 2, CANVAS_H / 2);
+        this.drawGlowText(ctx, '\u200Fהגל עבר!', CANVAS_W / 2, CANVAS_H / 2, '#fff', 'rgba(46, 204, 113, 0.8)', 20);
     }
 
     renderPaused() {
@@ -2280,11 +2272,10 @@ class Game {
         ctx.stroke();
 
         // Title
-        ctx.fillStyle = '#2c3e50';
-        ctx.font = 'bold 42px Arial';
+        ctx.font = `bold 42px ${F}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('\u200Fהפסקה', CANVAS_W / 2, boxY + 60);
+        this.drawGradientText(ctx, '\u200Fהפסקה', CANVAS_W / 2, boxY + 60, ['#2c3e50', '#3498db', '#2c3e50'], '#1a252f', 3);
 
         // Pause icon (decorative)
         const iconY = boxY + 115;
@@ -2304,16 +2295,14 @@ class Game {
         const btnY = CANVAS_H / 2 - 10;
 
         this.drawButton(ctx, btnX, btnY, btnW, btnH, 16, '#2ecc71', '#27ae60');
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 30px Arial';
-        ctx.fillText('\u200Fהמשך לשחק!', CANVAS_W / 2, btnY + btnH / 2);
+        ctx.font = `bold 30px ${F}`;
+        this.drawOutlinedText(ctx, '\u200Fהמשך לשחק!', CANVAS_W / 2, btnY + btnH / 2, '#fff', '#1a7a42', 3);
 
         // Menu button
         const menuBtnY = btnY + 90;
         this.drawButton(ctx, btnX, menuBtnY, btnW, btnH, 16, '#95a5a6', '#7f8c8d');
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 24px Arial';
-        ctx.fillText('תפריט ראשי', CANVAS_W / 2, menuBtnY + btnH / 2);
+        ctx.font = `bold 24px ${F}`;
+        this.drawOutlinedText(ctx, 'תפריט ראשי', CANVAS_W / 2, menuBtnY + btnH / 2, '#fff', 'rgba(0,0,0,0.3)', 2);
     }
 
     renderLevelWon() {
@@ -2350,14 +2339,13 @@ class Game {
         ctx.stroke();
 
         // Title
-        ctx.fillStyle = '#2c3e50';
-        ctx.font = 'bold 40px Arial';
+        ctx.font = `bold 42px ${F}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('\u200F🎉 כל הכבוד! 🎉', CANVAS_W / 2, boxY + 55);
+        this.drawGradientText(ctx, '\u200F🎉 כל הכבוד! 🎉', CANVAS_W / 2, boxY + 55, ['#f39c12', '#e74c3c', '#9b59b6', '#3498db', '#2ecc71'], '#1a252f', 3);
 
         // Sticker earned
-        ctx.font = '22px Arial';
+        ctx.font = `22px ${F}`;
         ctx.fillStyle = '#7f8c8d';
         ctx.fillText('\u200Fקיבלת מדבקה!', CANVAS_W / 2, boxY + 100);
 
@@ -2367,17 +2355,15 @@ class Game {
         const nextBtnX = CANVAS_W / 2 - 80;
         const nextBtnY = boxY + boxH * 0.62;
         this.drawButton(ctx, nextBtnX, nextBtnY, 160, 50, 12, '#2ecc71', '#27ae60');
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 22px Arial';
+        ctx.font = `bold 22px ${F}`;
         const nextText = (this.currentLevelIndex + 1 < LEVELS.length) ? 'שלב הבא' : '\u200Fסיימנו!';
-        ctx.fillText(nextText, CANVAS_W / 2, nextBtnY + 25);
+        this.drawOutlinedText(ctx, nextText, CANVAS_W / 2, nextBtnY + 25, '#fff', '#1a7a42', 2);
 
         // Back to menu button
         const menuBtnY = boxY + boxH * 0.82;
         this.drawButton(ctx, nextBtnX, menuBtnY, 160, 50, 12, '#95a5a6', '#7f8c8d');
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 18px Arial';
-        ctx.fillText('תפריט ראשי', CANVAS_W / 2, menuBtnY + 25);
+        ctx.font = `bold 18px ${F}`;
+        this.drawOutlinedText(ctx, 'תפריט ראשי', CANVAS_W / 2, menuBtnY + 25, '#fff', 'rgba(0,0,0,0.3)', 2);
     }
 
     renderLevelLost() {
@@ -2414,13 +2400,12 @@ class Game {
         ctx.stroke();
 
         // Encouraging message
-        ctx.fillStyle = '#2c3e50';
-        ctx.font = 'bold 32px Arial';
+        ctx.font = `bold 36px ${F}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('\u200Fאופס!', CANVAS_W / 2, boxY + 50);
+        this.drawGradientText(ctx, '\u200Fאופס!', CANVAS_W / 2, boxY + 50, ['#e74c3c', '#e67e22'], '#1a252f', 3);
 
-        ctx.font = '22px Arial';
+        ctx.font = `22px ${F}`;
         ctx.fillStyle = '#7f8c8d';
         ctx.fillText('\u200Fבואו ננסה שוב?', CANVAS_W / 2, boxY + 95);
 
@@ -2428,16 +2413,14 @@ class Game {
         const btnX = CANVAS_W / 2 - 80;
         const btnY = boxY + boxH * 0.5;
         this.drawButton(ctx, btnX, btnY, 160, 50, 12, '#3498db', '#2980b9');
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 22px Arial';
-        ctx.fillText('\u200Fנסו שוב!', CANVAS_W / 2, btnY + 25);
+        ctx.font = `bold 22px ${F}`;
+        this.drawOutlinedText(ctx, '\u200Fנסו שוב!', CANVAS_W / 2, btnY + 25, '#fff', '#1a5276', 2);
 
         // Back to menu
         const menuBtnY = boxY + boxH * 0.73;
         this.drawButton(ctx, btnX, menuBtnY, 160, 50, 12, '#95a5a6', '#7f8c8d');
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 18px Arial';
-        ctx.fillText('תפריט ראשי', CANVAS_W / 2, menuBtnY + 25);
+        ctx.font = `bold 18px ${F}`;
+        this.drawOutlinedText(ctx, 'תפריט ראשי', CANVAS_W / 2, menuBtnY + 25, '#fff', 'rgba(0,0,0,0.3)', 2);
     }
 
     renderConfetti() {
@@ -2541,11 +2524,10 @@ class Game {
         ctx.stroke();
 
         // Title
-        ctx.fillStyle = '#2c3e50';
-        ctx.font = 'bold 36px Arial';
+        ctx.font = `bold 36px ${F}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('הגדרות', CANVAS_W / 2, boxY + 45);
+        this.drawGradientText(ctx, 'הגדרות', CANVAS_W / 2, boxY + 45, ['#2c3e50', '#3498db', '#2c3e50'], '#1a252f', 3);
 
         // Toggle rows
         const toggles = [
@@ -2561,7 +2543,7 @@ class Game {
         for (const t of toggles) {
             // Label (right-aligned)
             ctx.fillStyle = '#2c3e50';
-            ctx.font = 'bold 24px Arial';
+            ctx.font = `bold 24px ${F}`;
             ctx.textAlign = 'right';
             ctx.textBaseline = 'middle';
             ctx.fillText(t.label, boxX + boxW - 40, t.y + toggleH / 2);
@@ -2598,7 +2580,7 @@ class Game {
         const resetBorder = this.resetConfirmPending ? '#962d22' : '#c0392b';
         this.drawButton(ctx, resetBtnX, resetBtnY, resetBtnW, resetBtnH, 12, resetColor, resetBorder);
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 20px Arial';
+        ctx.font = `bold 20px ${F}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         const resetText = this.resetConfirmPending ? '?בטוח' : 'איפוס התקדמות';
@@ -2607,7 +2589,7 @@ class Game {
         // Back button
         this.drawButton(ctx, 20, 20, 100, 40, 8, '#e74c3c', '#c0392b');
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 18px Arial';
+        ctx.font = `bold 18px ${F}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('חזרה', 70, 42);
@@ -2657,6 +2639,49 @@ class Game {
         ctx.restore();
     }
 
+    // ─── Text Effects ──────────────────────────────────────────────────
+
+    /** Draw text with outline + fill — great for readability over any background */
+    drawOutlinedText(ctx, text, x, y, fillColor, strokeColor = '#000', lineW = 3) {
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = lineW;
+        ctx.lineJoin = 'round';
+        ctx.strokeText(text, x, y);
+        ctx.fillStyle = fillColor;
+        ctx.fillText(text, x, y);
+    }
+
+    /** Draw text with glow + outline + fill — for big impactful text */
+    drawGlowText(ctx, text, x, y, fillColor, glowColor, glowBlur = 12) {
+        ctx.save();
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = glowBlur;
+        ctx.fillStyle = fillColor;
+        ctx.fillText(text, x, y);
+        ctx.fillText(text, x, y); // double-draw for stronger glow
+        ctx.restore();
+        ctx.strokeStyle = this.darkenColor(fillColor, 30);
+        ctx.lineWidth = 2;
+        ctx.lineJoin = 'round';
+        ctx.strokeText(text, x, y);
+        ctx.fillStyle = fillColor;
+        ctx.fillText(text, x, y);
+    }
+
+    /** Draw text with gradient fill + outline — for headings */
+    drawGradientText(ctx, text, x, y, colors, strokeColor = '#1a252f', lineW = 4) {
+        const m = ctx.measureText(text);
+        const halfW = m.width / 2;
+        const grad = ctx.createLinearGradient(x - halfW, y - 15, x + halfW, y + 15);
+        colors.forEach((c, i) => grad.addColorStop(i / (colors.length - 1), c));
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = lineW;
+        ctx.lineJoin = 'round';
+        ctx.strokeText(text, x, y);
+        ctx.fillStyle = grad;
+        ctx.fillText(text, x, y);
+    }
+
     // ─── Helpers ────────────────────────────────────────────────────────
 
     /**
@@ -2698,8 +2723,14 @@ class Game {
         ctx.restore();
     }
 
+    _expandHex(hex) {
+        let h = hex.replace('#', '');
+        if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+        return parseInt(h, 16);
+    }
+
     lightenColor(hex, percent) {
-        const num = parseInt(hex.replace('#', ''), 16);
+        const num = this._expandHex(hex);
         const r = Math.min(255, (num >> 16) + Math.round(255 * percent / 100));
         const g = Math.min(255, ((num >> 8) & 0xFF) + Math.round(255 * percent / 100));
         const b = Math.min(255, (num & 0xFF) + Math.round(255 * percent / 100));
@@ -2707,7 +2738,7 @@ class Game {
     }
 
     darkenColor(hex, percent) {
-        const num = parseInt(hex.replace('#', ''), 16);
+        const num = this._expandHex(hex);
         const r = Math.max(0, (num >> 16) - Math.round(255 * percent / 100));
         const g = Math.max(0, ((num >> 8) & 0xFF) - Math.round(255 * percent / 100));
         const b = Math.max(0, (num & 0xFF) - Math.round(255 * percent / 100));
