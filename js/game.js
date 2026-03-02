@@ -2153,7 +2153,7 @@ class Game {
 
             // Draw speaker icon programmatically (white on blue)
             ctx.save();
-            ctx.translate(cx, cy);
+            ctx.translate(cx - btnSize * 0.1, cy);
             const s = btnSize * 0.22; // scale unit
 
             // Speaker body: back plate + horn expanding to the right
