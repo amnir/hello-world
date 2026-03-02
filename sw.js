@@ -1,18 +1,18 @@
 // Bump version to force re-cache when files change
-const CACHE_NAME = 'wisdom-defenders-v3';
+const CACHE_NAME = 'wisdom-defenders-v4';
 const ASSETS = [
-    '/',
-    '/index.html',
-    '/css/style.css',
-    '/js/game.js',
-    '/js/sprites.js',
-    '/js/levels.js',
-    '/js/challenges.js',
-    '/js/audio.js',
-    '/manifest.json',
-    '/icons/icon.svg',
-    '/icons/icon-192.png',
-    '/icons/icon-512.png',
+    './',
+    './index.html',
+    './css/style.css',
+    './js/game.js',
+    './js/sprites.js',
+    './js/levels.js',
+    './js/challenges.js',
+    './js/audio.js',
+    './manifest.json',
+    './icons/icon.svg',
+    './icons/icon-192.png',
+    './icons/icon-512.png',
 ];
 
 // Install: cache all assets

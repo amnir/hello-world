@@ -2,7 +2,7 @@
     "name": "שומרי החוכמה - Wisdom Defenders",
     "short_name": "שומרי החוכמה",
     "description": "משחק הגנת מגדלים חינוכי לילדים - Educational tower defense game for kids",
-    "start_url": "/",
+    "start_url": "./",
     "display": "standalone",
     "orientation": "landscape",
     "dir": "rtl",
