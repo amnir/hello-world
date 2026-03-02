@@ -2723,8 +2723,14 @@ class Game {
         ctx.restore();
     }
 
+    _expandHex(hex) {
+        let h = hex.replace('#', '');
+        if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+        return parseInt(h, 16);
+    }
+
     lightenColor(hex, percent) {
-        const num = parseInt(hex.replace('#', ''), 16);
+        const num = this._expandHex(hex);
         const r = Math.min(255, (num >> 16) + Math.round(255 * percent / 100));
         const g = Math.min(255, ((num >> 8) & 0xFF) + Math.round(255 * percent / 100));
         const b = Math.min(255, (num & 0xFF) + Math.round(255 * percent / 100));
@@ -2732,7 +2738,7 @@ class Game {
     }
 
     darkenColor(hex, percent) {
-        const num = parseInt(hex.replace('#', ''), 16);
+        const num = this._expandHex(hex);
         const r = Math.max(0, (num >> 16) - Math.round(255 * percent / 100));
         const g = Math.max(0, ((num >> 8) & 0xFF) - Math.round(255 * percent / 100));
         const b = Math.max(0, (num & 0xFF) - Math.round(255 * percent / 100));
