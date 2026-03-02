@@ -468,7 +468,7 @@ class Game {
         // Reset
         this.stars = this.currentLevel.startingStars;
         this.waveIndex = 0;
-        this.waveTimer = 3; // 3 seconds before first wave
+        this.waveTimer = 8; // 8 seconds before first wave — gives kids time to place defenders
         this.defenders = [];
         this.enemies = [];
         this.projectiles = [];
@@ -578,7 +578,7 @@ class Game {
                 this.transitionTimer -= dt;
                 if (this.transitionTimer <= 0) {
                     this.state = STATE.PLAYING;
-                    this.waveTimer = 2; // brief pause before next wave
+                    this.waveTimer = 6; // pause before next wave — time to regroup
                 }
             }
 
