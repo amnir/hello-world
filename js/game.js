@@ -515,6 +515,14 @@ class Game {
         playPlace();
     }
 
+    getWaveDelay() {
+        // Later levels/waves get more time between waves to prepare
+        const baseDelay = 6;
+        const levelBonus = Math.min(this.currentLevelIndex, 5) * 0.5; // +0.5s per level, up to +2.5s
+        const waveBonus = Math.floor(this.waveIndex / 2) * 1;         // +1s every 2 waves
+        return baseDelay + levelBonus + waveBonus;
+    }
+
     showChallenge() {
         const types = this.currentLevel?.challengeTypes || ['counting'];
         this.activeChallenge = generateChallenge(types);
@@ -578,7 +586,7 @@ class Game {
                 this.transitionTimer -= dt;
                 if (this.transitionTimer <= 0) {
                     this.state = STATE.PLAYING;
-                    this.waveTimer = 6; // pause before next wave — time to regroup
+                    this.waveTimer = this.getWaveDelay(); // pause before next wave — scales with level
                 }
             }
 
@@ -1028,7 +1036,7 @@ class Game {
 
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 28px Arial';
-        ctx.fillText('!בואו נשחק', CANVAS_W / 2, btnY + 30);
+        ctx.fillText('\u200Fבואו נשחק!', CANVAS_W / 2, btnY + 30);
 
         // Grass at bottom
         ctx.fillStyle = '#27ae60';
@@ -1272,6 +1280,32 @@ class Game {
         ctx.textAlign = 'left';
         ctx.fillText(this.currentLevel?.name || '', 15, 45);
 
+        // Wave countdown timer
+        if (this.waveTimer > 0 && this.waveIndex < totalWaves && this.enemies.length === 0 && this.spawnTimers.length === 0) {
+            const secs = Math.ceil(this.waveTimer);
+            const timerText = `\u200Fהגל הבא בעוד: ${secs}`;
+            ctx.fillStyle = '#f39c12';
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(timerText, CANVAS_W / 2, CANVAS_H - 30);
+
+            // Progress bar
+            const barW = 160;
+            const barH = 6;
+            const barX = CANVAS_W / 2 - barW / 2;
+            const barY = CANVAS_H - 16;
+            const maxTimer = this.waveIndex === 0 ? 8 : this.getWaveDelay();
+            const progress = 1 - (this.waveTimer / maxTimer);
+
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            this.roundRect(ctx, barX, barY, barW, barH, 3);
+            ctx.fill();
+            ctx.fillStyle = '#f39c12';
+            this.roundRect(ctx, barX, barY, barW * Math.max(0, progress), barH, 3);
+            ctx.fill();
+        }
+
         // Defender selection bar
         if (!this.currentLevel) return;
         const defenders = this.currentLevel.availableDefenders;
@@ -1365,13 +1399,13 @@ class Game {
             if (this.challengeResult === 'correct') {
                 ctx.fillStyle = '#2ecc71';
                 ctx.font = 'bold 48px Arial';
-                ctx.fillText('!כל הכבוד', CANVAS_W / 2, CANVAS_H / 2 - 20);
+                ctx.fillText('\u200Fכל הכבוד!', CANVAS_W / 2, CANVAS_H / 2 - 20);
                 ctx.font = '24px Arial';
                 ctx.fillText('⭐⭐', CANVAS_W / 2, CANVAS_H / 2 + 30);
             } else {
                 ctx.fillStyle = '#e67e22';
                 ctx.font = 'bold 40px Arial';
-                ctx.fillText('!ניסיון יפה', CANVAS_W / 2, CANVAS_H / 2 - 20);
+                ctx.fillText('\u200Fניסיון יפה!', CANVAS_W / 2, CANVAS_H / 2 - 20);
                 ctx.font = '24px Arial';
                 ctx.fillText('⭐', CANVAS_W / 2, CANVAS_H / 2 + 30);
             }
@@ -1391,8 +1425,8 @@ class Game {
         ctx.textBaseline = 'middle';
         ctx.strokeStyle = '#27ae60';
         ctx.lineWidth = 3;
-        ctx.strokeText('!הגל עבר', CANVAS_W / 2, CANVAS_H / 2);
-        ctx.fillText('!הגל עבר', CANVAS_W / 2, CANVAS_H / 2);
+        ctx.strokeText('\u200Fהגל עבר!', CANVAS_W / 2, CANVAS_H / 2);
+        ctx.fillText('\u200Fהגל עבר!', CANVAS_W / 2, CANVAS_H / 2);
     }
 
     renderLevelWon() {
@@ -1420,12 +1454,12 @@ class Game {
         ctx.font = 'bold 40px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('!🎉 כל הכבוד 🎉', CANVAS_W / 2, boxY + 55);
+        ctx.fillText('\u200F🎉 כל הכבוד! 🎉', CANVAS_W / 2, boxY + 55);
 
         // Sticker earned
         ctx.font = '22px Arial';
         ctx.fillStyle = '#7f8c8d';
-        ctx.fillText('!קיבלת מדבקה', CANVAS_W / 2, boxY + 100);
+        ctx.fillText('\u200Fקיבלת מדבקה!', CANVAS_W / 2, boxY + 100);
 
         drawSticker(ctx, CANVAS_W / 2, boxY + 155, 35, this.currentLevel?.stickerReward || 'star', true);
 
@@ -1437,7 +1471,7 @@ class Game {
         ctx.fill();
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 22px Arial';
-        const nextText = (this.currentLevelIndex + 1 < LEVELS.length) ? 'שלב הבא' : '!סיימנו';
+        const nextText = (this.currentLevelIndex + 1 < LEVELS.length) ? 'שלב הבא' : '\u200Fסיימנו!';
         ctx.fillText(nextText, CANVAS_W / 2, nextBtnY + 25);
 
         // Back to menu button
@@ -1475,11 +1509,11 @@ class Game {
         ctx.font = 'bold 32px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('!אופס', CANVAS_W / 2, boxY + 50);
+        ctx.fillText('\u200Fאופס!', CANVAS_W / 2, boxY + 50);
 
         ctx.font = '22px Arial';
         ctx.fillStyle = '#7f8c8d';
-        ctx.fillText('?בואו ננסה שוב', CANVAS_W / 2, boxY + 95);
+        ctx.fillText('\u200Fבואו ננסה שוב?', CANVAS_W / 2, boxY + 95);
 
         // Try again button
         const btnX = CANVAS_W / 2 - 80;
@@ -1489,7 +1523,7 @@ class Game {
         ctx.fill();
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 22px Arial';
-        ctx.fillText('!נסו שוב', CANVAS_W / 2, btnY + 25);
+        ctx.fillText('\u200Fנסו שוב!', CANVAS_W / 2, btnY + 25);
 
         // Back to menu
         const menuBtnY = boxY + boxH * 0.73;
