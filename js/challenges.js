@@ -38,6 +38,27 @@ const SHAPES = [
 
 const FRUIT_EMOJI = ['🍎', '🍊', '🍋', '🍐', '🍇', '🍓', '🍌', '🍉'];
 
+const ANIMALS = [
+    { emoji: '🐶', name: 'כלב', habitat: 'land', baby: '🐕' },
+    { emoji: '🐱', name: 'חתול', habitat: 'land', baby: '🐈' },
+    { emoji: '🐟', name: 'דג', habitat: 'water', baby: '🐠' },
+    { emoji: '🐦', name: 'ציפור', habitat: 'sky', baby: '🐤' },
+    { emoji: '🐴', name: 'סוס', habitat: 'land', baby: '🐎' },
+    { emoji: '🐘', name: 'פיל', habitat: 'land', baby: '🐘' },
+    { emoji: '🐬', name: 'דולפין', habitat: 'water', baby: '🐬' },
+    { emoji: '🦅', name: 'נשר', habitat: 'sky', baby: '🦅' },
+    { emoji: '🐢', name: 'צב', habitat: 'water', baby: '🐢' },
+    { emoji: '🦋', name: 'פרפר', habitat: 'sky', baby: '🦋' },
+    { emoji: '🐄', name: 'פרה', habitat: 'land', baby: '🐮' },
+    { emoji: '🐸', name: 'צפרדע', habitat: 'water', baby: '🐸' },
+];
+
+const HABITATS = [
+    { id: 'land', emoji: '🌳', name: 'יבשה', color: '#27ae60' },
+    { id: 'water', emoji: '🌊', name: 'מים', color: '#3498db' },
+    { id: 'sky', emoji: '☁️', name: 'שמיים', color: '#85c1e9' },
+];
+
 // ─── Utility ─────────────────────────────────────────────────────────────────
 
 function shuffle(arr) {
@@ -562,6 +583,173 @@ function generatePatternChallenge() {
     };
 }
 
+/**
+ * ANIMALS (Habitat): "Where does the animal live?" — Show an animal, pick its habitat
+ */
+function generateAnimalChallengeHabitat() {
+    const animal = randChoice(ANIMALS);
+    const correctHabitat = HABITATS.find(h => h.id === animal.habitat);
+    const options = shuffle(HABITATS);
+    const correctIdx = options.findIndex(h => h.id === animal.habitat);
+
+    return {
+        type: 'animals',
+        questionText: `איפה גר ה${animal.name}?`,
+        render(ctx, area, time) {
+            const { x, y, w, h } = area;
+
+            // Show the animal large in the center-top area
+            ctx.font = `${h * 0.22}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(animal.emoji, x + w / 2, y + h * 0.28);
+
+            // Question text
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = `bold ${h * 0.07}px Arial`;
+            ctx.fillText(`\u200Fאיפה גר ה${animal.name}?`, x + w / 2, y + h * 0.48);
+
+            // Habitat buttons (3 options)
+            this.optionAreas = [];
+            const btnW = w * 0.25;
+            const btnH = h * 0.2;
+            const spacing = w * 0.28;
+            const startX = x + w / 2 - spacing;
+            const btnY = y + h * 0.58;
+
+            options.forEach((hab, i) => {
+                const bx = startX + i * spacing - btnW / 2;
+                const by = btnY;
+                const isHover = this._hoverIndex === i;
+
+                ctx.fillStyle = isHover ? hab.color : hab.color + '99';
+                roundRect(ctx, bx, by, btnW, btnH, 12);
+                ctx.fill();
+                ctx.strokeStyle = isHover ? '#fff' : '#333';
+                ctx.lineWidth = isHover ? 3 : 2;
+                ctx.stroke();
+
+                // Habitat emoji and name
+                ctx.fillStyle = '#fff';
+                ctx.font = `${btnH * 0.4}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(hab.emoji, bx + btnW / 2, by + btnH * 0.35);
+                ctx.font = `bold ${btnH * 0.25}px Arial`;
+                ctx.fillText(hab.name, bx + btnW / 2, by + btnH * 0.72);
+
+                this.optionAreas[i] = { x: bx, y: by, w: btnW, h: btnH };
+            });
+        },
+        checkAnswer(px, py) {
+            if (!this.optionAreas) return null;
+            for (let i = 0; i < this.optionAreas.length; i++) {
+                const a = this.optionAreas[i];
+                if (px >= a.x && px <= a.x + a.w && py >= a.y && py <= a.y + a.h) {
+                    return i === correctIdx ? 'correct' : 'wrong';
+                }
+            }
+            return null;
+        },
+        handleHover(px, py) {
+            this._hoverIndex = -1;
+            if (!this.optionAreas) return;
+            for (let i = 0; i < this.optionAreas.length; i++) {
+                const a = this.optionAreas[i];
+                if (px >= a.x && px <= a.x + a.w && py >= a.y && py <= a.y + a.h) {
+                    this._hoverIndex = i;
+                }
+            }
+        },
+    };
+}
+
+/**
+ * ANIMALS (Baby-Parent): "Who is the baby's mom?" — Show a baby animal, pick its parent
+ */
+function generateAnimalChallengeBabyParent() {
+    const correctAnimal = randChoice(ANIMALS);
+    // Pick 2 wrong animals (different from correct)
+    const others = shuffle(ANIMALS.filter(a => a.name !== correctAnimal.name)).slice(0, 2);
+    let options = shuffle([correctAnimal, ...others]);
+    const correctIdx = options.findIndex(a => a.name === correctAnimal.name);
+
+    return {
+        type: 'animals',
+        questionText: `מי האמא של ה${correctAnimal.name}?`,
+        render(ctx, area, time) {
+            const { x, y, w, h } = area;
+
+            // Show the baby large
+            ctx.font = `${h * 0.18}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(correctAnimal.baby, x + w / 2, y + h * 0.25);
+
+            // Question
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = `bold ${h * 0.07}px Arial`;
+            ctx.fillText(`\u200Fמי האמא?`, x + w / 2, y + h * 0.44);
+
+            // Options (3 adult animals)
+            this.optionAreas = [];
+            const btnSize = Math.min(w * 0.22, h * 0.26);
+            const spacing = w * 0.28;
+            const startX = x + w / 2 - spacing;
+            const btnY = y + h * 0.55;
+
+            options.forEach((animal, i) => {
+                const bx = startX + i * spacing - btnSize / 2;
+                const by = btnY;
+                const isHover = this._hoverIndex === i;
+
+                ctx.fillStyle = isHover ? '#f5cba7' : '#fdebd0';
+                roundRect(ctx, bx, by, btnSize, btnSize, 12);
+                ctx.fill();
+                ctx.strokeStyle = isHover ? '#e67e22' : '#d4ac0d';
+                ctx.lineWidth = isHover ? 3 : 2;
+                ctx.stroke();
+
+                ctx.font = `${btnSize * 0.5}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(animal.emoji, bx + btnSize / 2, by + btnSize * 0.45);
+
+                this.optionAreas[i] = { x: bx, y: by, w: btnSize, h: btnSize };
+            });
+        },
+        checkAnswer(px, py) {
+            if (!this.optionAreas) return null;
+            for (let i = 0; i < this.optionAreas.length; i++) {
+                const a = this.optionAreas[i];
+                if (px >= a.x && px <= a.x + a.w && py >= a.y && py <= a.y + a.h) {
+                    return i === correctIdx ? 'correct' : 'wrong';
+                }
+            }
+            return null;
+        },
+        handleHover(px, py) {
+            this._hoverIndex = -1;
+            if (!this.optionAreas) return;
+            for (let i = 0; i < this.optionAreas.length; i++) {
+                const a = this.optionAreas[i];
+                if (px >= a.x && px <= a.x + a.w && py >= a.y && py <= a.y + a.h) {
+                    this._hoverIndex = i;
+                }
+            }
+        },
+    };
+}
+
+/**
+ * ANIMALS: Randomly picks between habitat and baby-parent sub-types
+ */
+function generateAnimalChallenge() {
+    return Math.random() < 0.5
+        ? generateAnimalChallengeHabitat()
+        : generateAnimalChallengeBabyParent();
+}
+
 // ─── Rounded rect helper ────────────────────────────────────────────────────
 
 function roundRect(ctx, x, y, w, h, r) {
@@ -586,6 +774,7 @@ const GENERATORS = {
     letters: generateLetterChallenge,
     shapes: generateShapeChallenge,
     patterns: generatePatternChallenge,
+    animals: generateAnimalChallenge,
 };
 
 /**

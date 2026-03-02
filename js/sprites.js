@@ -1401,6 +1401,10 @@ export function drawSticker(ctx, x, y, size, type, earned = true) {
         check: '✓',
         crown: '👑',
         flower: '🌸',
+        diamond: '💎',
+        rainbow: '🌈',
+        medal: '🏅',
+        trophy: '🏆',
     };
     ctx.fillText(icons[type] || '⭐', 0, 2);
 
