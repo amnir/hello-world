@@ -19,7 +19,11 @@ function createMockCtx() {
 
 const AREA = { x: 0, y: 0, w: 960, h: 540 };
 
-const CHALLENGE_TYPES = ['counting', 'colors', 'letters', 'shapes', 'patterns', 'animals'];
+const CHALLENGE_TYPES = [
+    'counting', 'colors', 'letters', 'shapes', 'patterns', 'animals',
+    'shapeColor', 'mathCompare', 'countCompare', 'oddOneOut',
+    'countExact', 'nextNumber', 'sizeCompare', 'pairMatch',
+];
 
 // Helper: render a challenge and find the correct index by probing each option
 function findCorrectIndex(challenge) {
