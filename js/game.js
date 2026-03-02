@@ -92,6 +92,8 @@ class Game {
         this.challengeResult = null;  // 'correct'|'wrong'
         this.challengeResultTimer = 0;
         this.pendingStarReward = 0;
+        this.speakerBtnArea = null;   // {x,y,w,h} for the replay-instructions button
+        this.speakerBtnHover = false;
 
         // Progression
         this.earnedStickers = new Set();
@@ -249,6 +251,14 @@ class Game {
 
         if (this.state === STATE.CHALLENGE && this.activeChallenge) {
             this.activeChallenge.handleHover?.(pos.x, pos.y);
+
+            // Track hover state for the speaker replay button
+            if (this.speakerBtnArea) {
+                const b = this.speakerBtnArea;
+                this.speakerBtnHover =
+                    pos.x >= b.x && pos.x <= b.x + b.w &&
+                    pos.y >= b.y && pos.y <= b.y + b.h;
+            }
         }
     }
 
@@ -399,6 +409,17 @@ class Game {
     onChallengeClick(pos) {
         if (!this.activeChallenge) return;
         if (this.challengeResult) return; // already showing result
+
+        // Check if the speaker replay button was clicked
+        if (this.speakerBtnArea) {
+            const b = this.speakerBtnArea;
+            if (pos.x >= b.x && pos.x <= b.x + b.w && pos.y >= b.y && pos.y <= b.y + b.h) {
+                if (this.activeChallenge.questionText) {
+                    speak(this.activeChallenge.questionText);
+                }
+                return;
+            }
+        }
 
         const result = this.activeChallenge.checkAnswer(pos.x, pos.y);
         if (result === 'correct') {
@@ -582,6 +603,8 @@ class Game {
                     this.activeChallenge = null;
                     this.challengeResult = null;
                     this.pendingStarReward = 0;
+                    this.speakerBtnArea = null;
+                    this.speakerBtnHover = false;
                     this.state = STATE.PLAYING;
                 }
             }
@@ -1390,6 +1413,72 @@ class Game {
         // Render the challenge content
         if (this.activeChallenge) {
             this.activeChallenge.render(ctx, { x: popX, y: popY, w: popW, h: popH }, this.time);
+        }
+
+        // Draw the speaker replay button (top-left of popup, large for kids)
+        if (this.activeChallenge && !this.challengeResult) {
+            const btnSize = 52;
+            const btnMargin = 14;
+            const btnX = popX + btnMargin;
+            const btnY = popY + btnMargin;
+            this.speakerBtnArea = { x: btnX, y: btnY, w: btnSize, h: btnSize };
+
+            // Button background — rounded circle
+            const cx = btnX + btnSize / 2;
+            const cy = btnY + btnSize / 2;
+            const r = btnSize / 2;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.fillStyle = this.speakerBtnHover ? '#2980b9' : '#3498db';
+            ctx.fill();
+            if (this.speakerBtnHover) {
+                ctx.shadowColor = 'rgba(52, 152, 219, 0.5)';
+                ctx.shadowBlur = 10;
+            }
+            ctx.strokeStyle = '#2471a3';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.restore();
+
+            // Draw speaker icon programmatically (white on blue)
+            ctx.save();
+            ctx.translate(cx, cy);
+            const s = btnSize * 0.22; // scale unit
+
+            // Speaker body: back plate + horn expanding to the right
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            // Back plate (small rectangle on the left)
+            ctx.moveTo(-s * 0.5, -s * 0.45);
+            ctx.lineTo(0, -s * 0.45);
+            // Horn expands outward to the right
+            ctx.lineTo(s * 0.7, -s * 1.0);
+            ctx.lineTo(s * 0.7, s * 1.0);
+            ctx.lineTo(0, s * 0.45);
+            ctx.lineTo(-s * 0.5, s * 0.45);
+            ctx.closePath();
+            ctx.fill();
+
+            // Sound waves (arcs radiating from the right side of the horn)
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2.5;
+            ctx.lineCap = 'round';
+
+            // First wave (small)
+            ctx.beginPath();
+            ctx.arc(s * 0.7, 0, s * 0.55, -Math.PI * 0.3, Math.PI * 0.3);
+            ctx.stroke();
+
+            // Second wave (larger)
+            ctx.beginPath();
+            ctx.arc(s * 0.7, 0, s * 1.0, -Math.PI * 0.35, Math.PI * 0.35);
+            ctx.stroke();
+
+            ctx.restore();
+        } else {
+            this.speakerBtnArea = null;
         }
 
         // Show result feedback
