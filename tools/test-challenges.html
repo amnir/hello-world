@@ -222,7 +222,7 @@ canvas.addEventListener('click', (e) => {
 canvas.addEventListener('mousemove', (e) => {
     if (!challenge) return;
     const pos = getCanvasPos(e);
-    challenge.handleHover(pos.x, pos.y);
+    challenge.handleHover?.(pos.x, pos.y);
 });
 
 btnNew.addEventListener('click', () => {
