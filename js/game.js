@@ -49,6 +49,7 @@ const STATE = {
     WAVE_CLEAR: 'waveClear',
     LEVEL_WON: 'levelWon',
     LEVEL_LOST: 'levelLost',
+    STICKER_BOOK: 'stickerBook',
 };
 
 // Pause button dimensions (large for kid-friendly touch targets)
@@ -243,6 +244,9 @@ class Game {
             case STATE.LEVEL_LOST:
                 this.onLevelLostClick(pos);
                 break;
+            case STATE.STICKER_BOOK:
+                this.onStickerBookClick(pos);
+                break;
         }
     }
 
@@ -343,6 +347,19 @@ class Game {
         if (pos.x >= 20 && pos.x <= 120 && pos.y >= 20 && pos.y <= 60) {
             playClick();
             this.state = STATE.MENU;
+            return;
+        }
+
+        // My Stickers button
+        const stickerBtnW = 200;
+        const stickerBtnH = 50;
+        const stickerBtnX = CANVAS_W / 2 - stickerBtnW / 2;
+        const stickerBtnY = 440;
+        if (pos.x >= stickerBtnX && pos.x <= stickerBtnX + stickerBtnW &&
+            pos.y >= stickerBtnY && pos.y <= stickerBtnY + stickerBtnH) {
+            playClick();
+            this.state = STATE.STICKER_BOOK;
+            return;
         }
     }
 
@@ -1053,6 +1070,9 @@ class Game {
                 this.renderGame();
                 this.renderLevelLost();
                 break;
+            case STATE.STICKER_BOOK:
+                this.renderStickerBook();
+                break;
         }
 
         // Always render confetti on top
@@ -1210,6 +1230,261 @@ class Game {
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 18px Arial';
         ctx.fillText('חזרה', 70, 42);
+
+        // My Stickers button
+        const stickerBtnW = 200;
+        const stickerBtnH = 50;
+        const stickerBtnX = CANVAS_W / 2 - stickerBtnW / 2;
+        const stickerBtnY = 440;
+        ctx.fillStyle = '#f1c40f';
+        this.roundRect(ctx, stickerBtnX, stickerBtnY, stickerBtnW, stickerBtnH, 12);
+        ctx.fill();
+        ctx.strokeStyle = '#d4ac0d';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = '#2c3e50';
+        ctx.font = 'bold 22px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('\u{1F4D6} המדבקות שלי', CANVAS_W / 2, stickerBtnY + stickerBtnH / 2);
+    }
+
+    // ─── Sticker Book ────────────────────────────────────────────────────
+
+    renderStickerBook() {
+        const ctx = this.ctx;
+
+        // Dark gradient background
+        const grad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+        grad.addColorStop(0, '#1a1a2e');
+        grad.addColorStop(1, '#2c3e50');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+        // Gold decorative border
+        ctx.strokeStyle = '#f1c40f';
+        ctx.lineWidth = 4;
+        this.roundRect(ctx, 15, 15, CANVAS_W - 30, CANVAS_H - 30, 16);
+        ctx.stroke();
+
+        // Title
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 32px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('\u{1F4D6} \u05D0\u05D5\u05E1\u05E3 \u05D4\u05DE\u05D3\u05D1\u05E7\u05D5\u05EA', CANVAS_W / 2, 55);
+
+        // Progress counter
+        const earned = this.earnedStickers.size;
+        const total = LEVELS.length;
+        ctx.fillStyle = '#f1c40f';
+        ctx.font = '20px Arial';
+        ctx.fillText(`${earned}/${total} \u05DE\u05D3\u05D1\u05E7\u05D5\u05EA`, CANVAS_W / 2, 85);
+
+        // Sticker grid — 3 columns
+        const gridCols = 3;
+        const spacingX = 150;
+        const spacingY = 140;
+        const gridStartX = CANVAS_W / 2 - (gridCols - 1) * spacingX / 2;
+        const gridStartY = 160;
+
+        for (let i = 0; i < LEVELS.length; i++) {
+            const c = i % gridCols;
+            const r = Math.floor(i / gridCols);
+            const cx = gridStartX + c * spacingX;
+            const cy = gridStartY + r * spacingY;
+
+            const stickerKey = `${i}_${LEVELS[i].stickerReward}`;
+            const isEarned = this.earnedStickers.has(stickerKey);
+
+            if (isEarned) {
+                // Gold background circle
+                const pulse = 1 + Math.sin(this.time * 3 + i) * 0.1;
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.scale(pulse, pulse);
+                ctx.fillStyle = 'rgba(241, 196, 15, 0.3)';
+                ctx.beginPath();
+                ctx.arc(0, 0, 40, 0, Math.PI * 2);
+                ctx.fill();
+                drawSticker(ctx, 0, 0, 30, LEVELS[i].stickerReward, true);
+                ctx.restore();
+            } else {
+                drawSticker(ctx, cx, cy, 30, LEVELS[i].stickerReward, false);
+            }
+
+            // Level number
+            ctx.fillStyle = isEarned ? '#fff' : '#7f8c8d';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`\u05E9\u05DC\u05D1 ${i + 1}`, cx, cy + 45);
+
+            // Sticker type name
+            ctx.font = '12px Arial';
+            ctx.fillText(LEVELS[i].stickerReward, cx, cy + 62);
+        }
+
+        // Share button (only if at least 1 sticker earned)
+        if (earned > 0) {
+            const shareBtnW = 180;
+            const shareBtnH = 50;
+            const shareBtnX = CANVAS_W / 2 - shareBtnW / 2;
+            const shareBtnY = 400;
+            ctx.fillStyle = '#2ecc71';
+            this.roundRect(ctx, shareBtnX, shareBtnY, shareBtnW, shareBtnH, 12);
+            ctx.fill();
+            ctx.strokeStyle = '#27ae60';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 22px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('\u{1F4E4} \u05E9\u05EA\u05E4\u05D5!', CANVAS_W / 2, shareBtnY + shareBtnH / 2);
+        }
+
+        // Back button
+        ctx.fillStyle = '#e74c3c';
+        this.roundRect(ctx, 20, 20, 100, 40, 8);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 18px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('\u05D7\u05D6\u05E8\u05D4', 70, 42);
+    }
+
+    onStickerBookClick(pos) {
+        // Back button
+        if (pos.x >= 20 && pos.x <= 120 && pos.y >= 20 && pos.y <= 60) {
+            playClick();
+            this.state = STATE.LEVEL_SELECT;
+            return;
+        }
+
+        // Share button
+        if (this.earnedStickers.size > 0) {
+            const shareBtnW = 180;
+            const shareBtnH = 50;
+            const shareBtnX = CANVAS_W / 2 - shareBtnW / 2;
+            const shareBtnY = 400;
+            if (pos.x >= shareBtnX && pos.x <= shareBtnX + shareBtnW &&
+                pos.y >= shareBtnY && pos.y <= shareBtnY + shareBtnH) {
+                playClick();
+                this.generateShareCard();
+                return;
+            }
+        }
+    }
+
+    generateShareCard() {
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = 800;
+        offCanvas.height = 600;
+        const offCtx = offCanvas.getContext('2d');
+
+        // Background gradient (sky blue to green, like the game)
+        const bgGrad = offCtx.createLinearGradient(0, 0, 0, 600);
+        bgGrad.addColorStop(0, '#87CEEB');
+        bgGrad.addColorStop(1, '#98FB98');
+        offCtx.fillStyle = bgGrad;
+        offCtx.fillRect(0, 0, 800, 600);
+
+        // Decorative border
+        offCtx.strokeStyle = '#f1c40f';
+        offCtx.lineWidth = 6;
+        offCtx.beginPath();
+        offCtx.roundRect(10, 10, 780, 580, 20);
+        offCtx.stroke();
+
+        // Title
+        offCtx.fillStyle = '#2c3e50';
+        offCtx.font = 'bold 48px Arial';
+        offCtx.textAlign = 'center';
+        offCtx.textBaseline = 'middle';
+        offCtx.fillText('\u05E9\u05D5\u05DE\u05E8\u05D9 \u05D4\u05D7\u05D5\u05DB\u05DE\u05D4', 400, 80);
+
+        // Subtitle
+        offCtx.fillStyle = '#e67e22';
+        offCtx.font = 'bold 32px Arial';
+        offCtx.fillText('\u{1F31F} \u05D0\u05D5\u05E1\u05E3 \u05D4\u05DE\u05D3\u05D1\u05E7\u05D5\u05EA \u05E9\u05DC\u05D9 \u{1F31F}', 400, 140);
+
+        // Draw earned stickers in a row, centered
+        const earnedArr = [];
+        for (let i = 0; i < LEVELS.length; i++) {
+            const stickerKey = `${i}_${LEVELS[i].stickerReward}`;
+            if (this.earnedStickers.has(stickerKey)) {
+                earnedArr.push({ index: i, type: LEVELS[i].stickerReward });
+            }
+        }
+
+        const stickerSpacing = Math.min(120, 600 / (earnedArr.length + 1));
+        const stickerRowX = 400 - (earnedArr.length - 1) * stickerSpacing / 2;
+        const stickerRowY = 280;
+
+        for (let j = 0; j < earnedArr.length; j++) {
+            const sx = stickerRowX + j * stickerSpacing;
+            // Gold background circle
+            offCtx.fillStyle = 'rgba(241, 196, 15, 0.3)';
+            offCtx.beginPath();
+            offCtx.arc(sx, stickerRowY, 45, 0, Math.PI * 2);
+            offCtx.fill();
+            drawSticker(offCtx, sx, stickerRowY, 35, earnedArr[j].type, true);
+        }
+
+        // Progress bar
+        const barX = 150;
+        const barY = 420;
+        const barW = 500;
+        const barH = 30;
+        const progress = this.earnedStickers.size / LEVELS.length;
+
+        // Bar background
+        offCtx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        offCtx.beginPath();
+        offCtx.roundRect(barX, barY, barW, barH, 15);
+        offCtx.fill();
+
+        // Bar fill
+        const fillGrad = offCtx.createLinearGradient(barX, 0, barX + barW, 0);
+        fillGrad.addColorStop(0, '#f1c40f');
+        fillGrad.addColorStop(1, '#e67e22');
+        offCtx.fillStyle = fillGrad;
+        offCtx.beginPath();
+        offCtx.roundRect(barX, barY, barW * progress, barH, 15);
+        offCtx.fill();
+
+        // Progress text
+        offCtx.fillStyle = '#2c3e50';
+        offCtx.font = 'bold 20px Arial';
+        offCtx.fillText(`${this.earnedStickers.size}/${LEVELS.length}`, 400, barY + barH + 30);
+
+        // Footer
+        offCtx.fillStyle = '#7f8c8d';
+        offCtx.font = '22px Arial';
+        offCtx.fillText('Wisdom Defenders \u{1F3AE}', 400, 540);
+
+        // Share or download
+        const dataUrl = offCanvas.toDataURL('image/png');
+        if (navigator.share && navigator.canShare) {
+            offCanvas.toBlob(async (blob) => {
+                const file = new File([blob], 'wisdom-defenders-stickers.png', { type: 'image/png' });
+                try {
+                    await navigator.share({ files: [file], title: '\u05E9\u05D5\u05DE\u05E8\u05D9 \u05D4\u05D7\u05D5\u05DB\u05DE\u05D4' });
+                } catch (e) {
+                    this.downloadShareCard(dataUrl);
+                }
+            });
+        } else {
+            this.downloadShareCard(dataUrl);
+        }
+    }
+
+    downloadShareCard(dataUrl) {
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = 'wisdom-defenders-stickers.png';
+        a.click();
     }
 
     // ─── Game Field ─────────────────────────────────────────────────────
