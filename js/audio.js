@@ -148,6 +148,14 @@ export function playGameOver() {
     playTone(294, 0.5, 'sine', 0.1, 0.75);
 }
 
+/** Combo streak ascending flourish */
+export function playComboSound() {
+    playTone(659, 0.1, 'sine', 0.12, 0.55);   // E5
+    playTone(784, 0.1, 'sine', 0.12, 0.65);   // G5
+    playTone(988, 0.1, 'sine', 0.12, 0.75);   // B5
+    playTone(1175, 0.15, 'sine', 0.1, 0.85);  // D6
+}
+
 // ─── Background Music ───────────────────────────────────────────────────────
 
 let bgMusicInterval = null;
