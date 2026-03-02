@@ -63,8 +63,12 @@ class Game {
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
-        this.canvas.width = CANVAS_W;
-        this.canvas.height = CANVAS_H;
+
+        // HiDPI/Retina support
+        const dpr = window.devicePixelRatio || 1;
+        this.canvas.width = CANVAS_W * dpr;
+        this.canvas.height = CANVAS_H * dpr;
+        this.ctx.scale(dpr, dpr);
 
         // State
         this.state = STATE.MENU;
@@ -1196,12 +1200,24 @@ class Game {
         ctx.scale(titleScale, titleScale);
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        // Drop shadow
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
         ctx.font = 'bold 52px Arial';
-        ctx.fillText('שומרי החוכמה', 3, 3);
-        // Main title
-        ctx.fillStyle = '#2c3e50';
+        // Outer glow
+        ctx.shadowColor = 'rgba(241, 196, 15, 0.5)';
+        ctx.shadowBlur = 15;
+        // Drop shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillText('שומרי החוכמה', 3, 4);
+        ctx.shadowBlur = 0;
+        // Thick outline
+        ctx.strokeStyle = '#1a252f';
+        ctx.lineWidth = 5;
+        ctx.strokeText('שומרי החוכמה', 0, 0);
+        // Gradient fill
+        const titleGrad = ctx.createLinearGradient(-150, -25, 150, 25);
+        titleGrad.addColorStop(0, '#f39c12');
+        titleGrad.addColorStop(0.5, '#f1c40f');
+        titleGrad.addColorStop(1, '#e67e22');
+        ctx.fillStyle = titleGrad;
         ctx.fillText('שומרי החוכמה', 0, 0);
         ctx.restore();
 
@@ -1242,14 +1258,8 @@ class Game {
         ctx.shadowBlur = glowIntensity;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
-        ctx.fillStyle = '#2ecc71';
-        this.roundRect(ctx, btnX, btnY, 160, 60, 15);
-        ctx.fill();
+        this.drawButton(ctx, btnX, btnY, 160, 60, 15, '#2ecc71', '#27ae60');
         ctx.restore();
-        ctx.strokeStyle = '#27ae60';
-        ctx.lineWidth = 3;
-        this.roundRect(ctx, btnX, btnY, 160, 60, 15);
-        ctx.stroke();
 
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 28px Arial';
@@ -1310,6 +1320,37 @@ class Game {
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
+        // Floating sparkles in background
+        const sparkles = [
+            { x: 100, y: 80, phase: 0, speed: 2.5 },
+            { x: 300, y: 120, phase: 1.0, speed: 3.0 },
+            { x: 500, y: 60, phase: 2.2, speed: 2.8 },
+            { x: 700, y: 100, phase: 0.5, speed: 3.2 },
+            { x: 850, y: 70, phase: 3.5, speed: 2.3 },
+            { x: 200, y: 480, phase: 1.8, speed: 2.7 },
+            { x: 600, y: 500, phase: 4.0, speed: 3.1 },
+            { x: 800, y: 460, phase: 2.8, speed: 2.6 },
+        ];
+        for (const s of sparkles) {
+            const alpha = 0.15 + Math.sin(this.time * s.speed + s.phase) * 0.15 + 0.15;
+            const sz = 2 + Math.sin(this.time * s.speed + s.phase) * 1;
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.moveTo(s.x, s.y - sz);
+            ctx.lineTo(s.x + sz * 0.3, s.y - sz * 0.3);
+            ctx.lineTo(s.x + sz, s.y);
+            ctx.lineTo(s.x + sz * 0.3, s.y + sz * 0.3);
+            ctx.lineTo(s.x, s.y + sz);
+            ctx.lineTo(s.x - sz * 0.3, s.y + sz * 0.3);
+            ctx.lineTo(s.x - sz, s.y);
+            ctx.lineTo(s.x - sz * 0.3, s.y - sz * 0.3);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+
         // Title
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 32px Arial';
@@ -1334,13 +1375,12 @@ class Game {
 
             const unlocked = i <= this.highestLevel;
 
-            // Button background
-            ctx.fillStyle = unlocked ? '#2ecc71' : '#7f8c8d';
-            this.roundRect(ctx, bx, by, btnW, btnH, 12);
-            ctx.fill();
-            ctx.strokeStyle = unlocked ? '#27ae60' : '#666';
-            ctx.lineWidth = 2;
-            ctx.stroke();
+            // Button background with gradient and shadow
+            if (unlocked) {
+                this.drawButton(ctx, bx, by, btnW, btnH, 12, '#2ecc71', '#27ae60');
+            } else {
+                this.drawButton(ctx, bx, by, btnW, btnH, 12, '#7f8c8d', '#666666');
+            }
 
             // Level number
             ctx.fillStyle = '#fff';
@@ -1366,9 +1406,7 @@ class Game {
         }
 
         // Back button
-        ctx.fillStyle = '#e74c3c';
-        this.roundRect(ctx, 20, 20, 100, 40, 8);
-        ctx.fill();
+        this.drawButton(ctx, 20, 20, 100, 40, 8, '#e74c3c', '#c0392b');
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 18px Arial';
         ctx.fillText('חזרה', 70, 42);
@@ -1379,12 +1417,7 @@ class Game {
         const stickerBtnH = 45;
         const stickerBtnX = CANVAS_W / 2 - stickerBtnW / 2;
         const stickerBtnY = gridBottom + 8;
-        ctx.fillStyle = '#f1c40f';
-        this.roundRect(ctx, stickerBtnX, stickerBtnY, stickerBtnW, stickerBtnH, 12);
-        ctx.fill();
-        ctx.strokeStyle = '#d4ac0d';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        this.drawButton(ctx, stickerBtnX, stickerBtnY, stickerBtnW, stickerBtnH, 12, '#f1c40f', '#d4ac0d');
         ctx.fillStyle = '#2c3e50';
         ctx.font = 'bold 22px Arial';
         ctx.textAlign = 'center';
@@ -1473,12 +1506,7 @@ class Game {
             const shareBtnH = 50;
             const shareBtnX = CANVAS_W / 2 - shareBtnW / 2;
             const shareBtnY = 400;
-            ctx.fillStyle = '#2ecc71';
-            this.roundRect(ctx, shareBtnX, shareBtnY, shareBtnW, shareBtnH, 12);
-            ctx.fill();
-            ctx.strokeStyle = '#27ae60';
-            ctx.lineWidth = 2;
-            ctx.stroke();
+            this.drawButton(ctx, shareBtnX, shareBtnY, shareBtnW, shareBtnH, 12, '#2ecc71', '#27ae60');
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 22px Arial';
             ctx.textAlign = 'center';
@@ -1487,9 +1515,7 @@ class Game {
         }
 
         // Back button
-        ctx.fillStyle = '#e74c3c';
-        this.roundRect(ctx, 20, 20, 100, 40, 8);
-        ctx.fill();
+        this.drawButton(ctx, 20, 20, 100, 40, 8, '#e74c3c', '#c0392b');
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 18px Arial';
         ctx.textAlign = 'center';
@@ -1650,20 +1676,51 @@ class Game {
         // Grass/lawn grid
         for (let row = 0; row < ROWS; row++) {
             for (let col = 0; col < COLS; col++) {
-                const x = GRID_LEFT + col * CELL_W;
-                const y = GRID_TOP + row * CELL_H;
+                const cx = GRID_LEFT + col * CELL_W;
+                const cy = GRID_TOP + row * CELL_H;
 
-                // Alternating green shades
-                const shade = (row + col) % 2 === 0 ? '#7ec87e' : '#6ab86a';
-                ctx.fillStyle = shade;
-                ctx.fillRect(x, y, CELL_W, CELL_H);
+                // Alternating green shades with subtle gradient
+                const isLight = (row + col) % 2 === 0;
+                const cellGrad = ctx.createLinearGradient(cx, cy, cx, cy + CELL_H);
+                cellGrad.addColorStop(0, isLight ? '#88d488' : '#74c474');
+                cellGrad.addColorStop(1, isLight ? '#72c072' : '#5eae5e');
+                ctx.fillStyle = cellGrad;
+                ctx.fillRect(cx, cy, CELL_W, CELL_H);
+
+                // Inner shadow/vignette (darker edges)
+                const vigGrad = ctx.createRadialGradient(
+                    cx + CELL_W / 2, cy + CELL_H / 2, CELL_W * 0.25,
+                    cx + CELL_W / 2, cy + CELL_H / 2, CELL_W * 0.7
+                );
+                vigGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+                vigGrad.addColorStop(1, 'rgba(0, 0, 0, 0.06)');
+                ctx.fillStyle = vigGrad;
+                ctx.fillRect(cx, cy, CELL_W, CELL_H);
 
                 // Grid lines
                 ctx.strokeStyle = 'rgba(0,0,0,0.08)';
                 ctx.lineWidth = 1;
-                ctx.strokeRect(x, y, CELL_W, CELL_H);
+                ctx.strokeRect(cx, cy, CELL_W, CELL_H);
+
+                // Grass tufts (small dots/blades for texture)
+                ctx.fillStyle = 'rgba(40, 160, 40, 0.25)';
+                const seed = row * 7 + col * 13;
+                for (let t = 0; t < 3; t++) {
+                    const tx = cx + ((seed + t * 37) % 90) + 10;
+                    const ty = cy + ((seed + t * 53) % 110) + 10;
+                    ctx.beginPath();
+                    ctx.arc(tx, ty, 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
             }
         }
+
+        // Soft drop shadow along grid edges
+        const gridShadowGrad = ctx.createLinearGradient(GRID_LEFT, GRID_BOTTOM, GRID_LEFT, GRID_BOTTOM + 8);
+        gridShadowGrad.addColorStop(0, 'rgba(0, 0, 0, 0.12)');
+        gridShadowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = gridShadowGrad;
+        ctx.fillRect(GRID_LEFT, GRID_BOTTOM, GRID_RIGHT - GRID_LEFT, 8);
 
         // Hover highlight
         if (this.hoverCell && this.selectedDefender && this.state === STATE.PLAYING) {
@@ -1675,8 +1732,12 @@ class Game {
             ctx.fillRect(hx, hy, CELL_W, CELL_H);
         }
 
-        // Path/road at left (enemy entrance)
-        ctx.fillStyle = '#8B7355';
+        // Path/road at left (enemy entrance) with gradient
+        const pathGrad = ctx.createLinearGradient(0, GRID_TOP, GRID_LEFT, GRID_TOP);
+        pathGrad.addColorStop(0, '#9c8567');
+        pathGrad.addColorStop(0.5, '#8B7355');
+        pathGrad.addColorStop(1, '#7a6347');
+        ctx.fillStyle = pathGrad;
         ctx.fillRect(0, GRID_TOP, GRID_LEFT, GRID_BOTTOM - GRID_TOP);
 
         // House
@@ -1759,9 +1820,19 @@ class Game {
     renderHUD() {
         const ctx = this.ctx;
 
-        // HUD background
-        ctx.fillStyle = 'rgba(44, 62, 80, 0.85)';
+        // HUD background with gradient
+        const hudGrad = ctx.createLinearGradient(0, 0, 0, HUD_HEIGHT);
+        hudGrad.addColorStop(0, 'rgba(52, 73, 94, 0.9)');
+        hudGrad.addColorStop(1, 'rgba(36, 52, 68, 0.88)');
+        ctx.fillStyle = hudGrad;
         ctx.fillRect(0, 0, CANVAS_W, HUD_HEIGHT);
+        // Thin highlight line at bottom edge
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, HUD_HEIGHT);
+        ctx.lineTo(CANVAS_W, HUD_HEIGHT);
+        ctx.stroke();
 
         // Star count (top right because RTL)
         drawCollectStar(ctx, CANVAS_W - 40, 20, 14, this.time);
@@ -1830,14 +1901,27 @@ class Game {
             const canAfford = this.stars >= def.cost;
             const isSelected = this.selectedDefender === defId;
 
-            // Button background
-            ctx.fillStyle = isSelected ? '#f39c12' : canAfford ? '#34495e' : '#1a252f';
+            // Button background with gradient
+            const defBtnGrad = ctx.createLinearGradient(bx, by, bx, by + btnSize);
+            defBtnGrad.addColorStop(0, isSelected ? '#f5ab35' : canAfford ? '#3d566e' : '#22303f');
+            defBtnGrad.addColorStop(1, isSelected ? '#e08e0b' : canAfford ? '#2c3e50' : '#131d27');
+            ctx.fillStyle = defBtnGrad;
             this.roundRect(ctx, bx, by, btnSize, btnSize, 8);
             ctx.fill();
 
             if (isSelected) {
                 ctx.strokeStyle = '#f1c40f';
                 ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+
+            // Subtle separator between buttons
+            if (i > 0) {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(bx - spacing / 2, by + 8);
+                ctx.lineTo(bx - spacing / 2, by + btnSize - 8);
                 ctx.stroke();
             }
 
@@ -1908,12 +1992,28 @@ class Game {
         const popX = (CANVAS_W - popW) / 2;
         const popY = (CANVAS_H - popH) / 2;
 
-        // Background
-        ctx.fillStyle = '#fff';
+        // Drop shadow behind dialog
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+        ctx.shadowBlur = 20;
+        ctx.shadowOffsetY = 5;
+        // Gradient background
+        const popGrad = ctx.createLinearGradient(popX, popY, popX, popY + popH);
+        popGrad.addColorStop(0, '#ffffff');
+        popGrad.addColorStop(1, '#f0f0f0');
+        ctx.fillStyle = popGrad;
         this.roundRect(ctx, popX, popY, popW, popH, 20);
         ctx.fill();
+        ctx.restore();
+        // Border
         ctx.strokeStyle = '#3498db';
         ctx.lineWidth = 4;
+        this.roundRect(ctx, popX, popY, popW, popH, 20);
+        ctx.stroke();
+        // Inner highlight border
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 2;
+        this.roundRect(ctx, popX + 3, popY + 3, popW - 6, popH - 6, 18);
         ctx.stroke();
 
         // Render the challenge content
@@ -2042,11 +2142,24 @@ class Game {
         const boxX = (CANVAS_W - boxW) / 2;
         const boxY = (CANVAS_H - boxH) / 2;
 
-        ctx.fillStyle = '#fff';
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+        ctx.shadowBlur = 20;
+        ctx.shadowOffsetY = 5;
+        const pauseGrad = ctx.createLinearGradient(boxX, boxY, boxX, boxY + boxH);
+        pauseGrad.addColorStop(0, '#ffffff');
+        pauseGrad.addColorStop(1, '#f0f0f0');
+        ctx.fillStyle = pauseGrad;
         this.roundRect(ctx, boxX, boxY, boxW, boxH, 24);
         ctx.fill();
+        ctx.restore();
         ctx.strokeStyle = '#3498db';
         ctx.lineWidth = 4;
+        this.roundRect(ctx, boxX, boxY, boxW, boxH, 24);
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 2;
+        this.roundRect(ctx, boxX + 3, boxY + 3, boxW - 6, boxH - 6, 22);
         ctx.stroke();
 
         // Title
@@ -2073,26 +2186,14 @@ class Game {
         const btnX = CANVAS_W / 2 - btnW / 2;
         const btnY = CANVAS_H / 2 - 10;
 
-        ctx.fillStyle = '#2ecc71';
-        this.roundRect(ctx, btnX, btnY, btnW, btnH, 16);
-        ctx.fill();
-        ctx.strokeStyle = '#27ae60';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-
+        this.drawButton(ctx, btnX, btnY, btnW, btnH, 16, '#2ecc71', '#27ae60');
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 30px Arial';
         ctx.fillText('\u200Fהמשך לשחק!', CANVAS_W / 2, btnY + btnH / 2);
 
         // Menu button
         const menuBtnY = btnY + 90;
-        ctx.fillStyle = '#95a5a6';
-        this.roundRect(ctx, btnX, menuBtnY, btnW, btnH, 16);
-        ctx.fill();
-        ctx.strokeStyle = '#7f8c8d';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
+        this.drawButton(ctx, btnX, menuBtnY, btnW, btnH, 16, '#95a5a6', '#7f8c8d');
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 24px Arial';
         ctx.fillText('תפריט ראשי', CANVAS_W / 2, menuBtnY + btnH / 2);
@@ -2111,11 +2212,24 @@ class Game {
         const boxX = (CANVAS_W - boxW) / 2;
         const boxY = (CANVAS_H - boxH) / 2;
 
-        ctx.fillStyle = '#fff';
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+        ctx.shadowBlur = 20;
+        ctx.shadowOffsetY = 5;
+        const wonGrad = ctx.createLinearGradient(boxX, boxY, boxX, boxY + boxH);
+        wonGrad.addColorStop(0, '#fffef5');
+        wonGrad.addColorStop(1, '#f0ece0');
+        ctx.fillStyle = wonGrad;
         this.roundRect(ctx, boxX, boxY, boxW, boxH, 20);
         ctx.fill();
+        ctx.restore();
         ctx.strokeStyle = '#f1c40f';
         ctx.lineWidth = 4;
+        this.roundRect(ctx, boxX, boxY, boxW, boxH, 20);
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 2;
+        this.roundRect(ctx, boxX + 3, boxY + 3, boxW - 6, boxH - 6, 18);
         ctx.stroke();
 
         // Title
@@ -2135,9 +2249,7 @@ class Game {
         // Next Level button
         const nextBtnX = CANVAS_W / 2 - 80;
         const nextBtnY = boxY + boxH * 0.62;
-        ctx.fillStyle = '#2ecc71';
-        this.roundRect(ctx, nextBtnX, nextBtnY, 160, 50, 12);
-        ctx.fill();
+        this.drawButton(ctx, nextBtnX, nextBtnY, 160, 50, 12, '#2ecc71', '#27ae60');
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 22px Arial';
         const nextText = (this.currentLevelIndex + 1 < LEVELS.length) ? 'שלב הבא' : '\u200Fסיימנו!';
@@ -2145,9 +2257,7 @@ class Game {
 
         // Back to menu button
         const menuBtnY = boxY + boxH * 0.82;
-        ctx.fillStyle = '#95a5a6';
-        this.roundRect(ctx, nextBtnX, menuBtnY, 160, 50, 12);
-        ctx.fill();
+        this.drawButton(ctx, nextBtnX, menuBtnY, 160, 50, 12, '#95a5a6', '#7f8c8d');
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 18px Arial';
         ctx.fillText('תפריט ראשי', CANVAS_W / 2, menuBtnY + 25);
@@ -2166,11 +2276,24 @@ class Game {
         const boxX = (CANVAS_W - boxW) / 2;
         const boxY = (CANVAS_H - boxH) / 2;
 
-        ctx.fillStyle = '#fff';
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+        ctx.shadowBlur = 20;
+        ctx.shadowOffsetY = 5;
+        const lostGrad = ctx.createLinearGradient(boxX, boxY, boxX, boxY + boxH);
+        lostGrad.addColorStop(0, '#ffffff');
+        lostGrad.addColorStop(1, '#f0f0f0');
+        ctx.fillStyle = lostGrad;
         this.roundRect(ctx, boxX, boxY, boxW, boxH, 20);
         ctx.fill();
+        ctx.restore();
         ctx.strokeStyle = '#e67e22';
         ctx.lineWidth = 4;
+        this.roundRect(ctx, boxX, boxY, boxW, boxH, 20);
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 2;
+        this.roundRect(ctx, boxX + 3, boxY + 3, boxW - 6, boxH - 6, 18);
         ctx.stroke();
 
         // Encouraging message
@@ -2187,18 +2310,14 @@ class Game {
         // Try again button
         const btnX = CANVAS_W / 2 - 80;
         const btnY = boxY + boxH * 0.5;
-        ctx.fillStyle = '#3498db';
-        this.roundRect(ctx, btnX, btnY, 160, 50, 12);
-        ctx.fill();
+        this.drawButton(ctx, btnX, btnY, 160, 50, 12, '#3498db', '#2980b9');
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 22px Arial';
         ctx.fillText('\u200Fנסו שוב!', CANVAS_W / 2, btnY + 25);
 
         // Back to menu
         const menuBtnY = boxY + boxH * 0.73;
-        ctx.fillStyle = '#95a5a6';
-        this.roundRect(ctx, btnX, menuBtnY, 160, 50, 12);
-        ctx.fill();
+        this.drawButton(ctx, btnX, menuBtnY, 160, 50, 12, '#95a5a6', '#7f8c8d');
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 18px Arial';
         ctx.fillText('תפריט ראשי', CANVAS_W / 2, menuBtnY + 25);
@@ -2215,20 +2334,94 @@ class Game {
 
     // ─── Helpers ────────────────────────────────────────────────────────
 
+    /**
+     * Draw a polished button with gradient, highlight, and drop shadow.
+     * baseColor: the main button color (hex string)
+     */
+    drawButton(ctx, x, y, w, h, r, baseColor, borderColor) {
+        ctx.save();
+        // Drop shadow
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
+        ctx.shadowBlur = 6;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 3;
+
+        // Gradient fill (lighter top → darker bottom)
+        const grad = ctx.createLinearGradient(x, y, x, y + h);
+        grad.addColorStop(0, this.lightenColor(baseColor, 20));
+        grad.addColorStop(1, this.darkenColor(baseColor, 15));
+        ctx.fillStyle = grad;
+        this.roundRect(ctx, x, y, w, h, r);
+        ctx.fill();
+        ctx.restore();
+
+        // Border
+        ctx.strokeStyle = borderColor || this.darkenColor(baseColor, 25);
+        ctx.lineWidth = 2;
+        this.roundRect(ctx, x, y, w, h, r);
+        ctx.stroke();
+
+        // Inner highlight line at top
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(x + r + 2, y + 2);
+        ctx.lineTo(x + w - r - 2, y + 2);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+        ctx.lineWidth = 1;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    lightenColor(hex, percent) {
+        const num = parseInt(hex.replace('#', ''), 16);
+        const r = Math.min(255, (num >> 16) + Math.round(255 * percent / 100));
+        const g = Math.min(255, ((num >> 8) & 0xFF) + Math.round(255 * percent / 100));
+        const b = Math.min(255, (num & 0xFF) + Math.round(255 * percent / 100));
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    darkenColor(hex, percent) {
+        const num = parseInt(hex.replace('#', ''), 16);
+        const r = Math.max(0, (num >> 16) - Math.round(255 * percent / 100));
+        const g = Math.max(0, ((num >> 8) & 0xFF) - Math.round(255 * percent / 100));
+        const b = Math.max(0, (num & 0xFF) - Math.round(255 * percent / 100));
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+
     drawCloud(ctx, x, y, size) {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        ctx.beginPath();
-        ctx.arc(x, y, size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(x + size * 0.6, y + size * 0.2, size * 0.7, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(x - size * 0.5, y + size * 0.2, size * 0.6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(x + size * 0.2, y + size * 0.4, size * 0.5, 0, Math.PI * 2);
-        ctx.fill();
+        // Cloud puffs with positions and radii
+        const puffs = [
+            { dx: 0, dy: 0, r: size },
+            { dx: size * 0.7, dy: size * 0.15, r: size * 0.75 },
+            { dx: -size * 0.6, dy: size * 0.18, r: size * 0.65 },
+            { dx: size * 0.25, dy: size * 0.35, r: size * 0.55 },
+            { dx: -size * 0.25, dy: size * 0.3, r: size * 0.5 },
+            { dx: size * 1.1, dy: size * 0.3, r: size * 0.5 },
+        ];
+
+        // Subtle shadow underneath
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+        for (const p of puffs) {
+            ctx.beginPath();
+            ctx.arc(x + p.dx, y + p.dy + size * 0.25, p.r * 0.9, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Cloud puffs with radial gradients
+        for (const p of puffs) {
+            const grad = ctx.createRadialGradient(
+                x + p.dx - p.r * 0.2, y + p.dy - p.r * 0.2, 0,
+                x + p.dx, y + p.dy, p.r
+            );
+            grad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+            grad.addColorStop(0.7, 'rgba(255, 255, 255, 0.7)');
+            grad.addColorStop(1, 'rgba(240, 245, 255, 0.3)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(x + p.dx, y + p.dy, p.r, 0, Math.PI * 2);
+            ctx.fill();
+        }
     }
 
     roundRect(ctx, x, y, w, h, r) {
@@ -2275,6 +2468,13 @@ function resizeCanvas(canvas) {
 
     canvas.style.width = `${w}px`;
     canvas.style.height = `${h}px`;
+
+    // HiDPI/Retina: scale backing buffer
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = CANVAS_W * dpr;
+    canvas.height = CANVAS_H * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
 }
 
 // ─── Initialize ─────────────────────────────────────────────────────────────
