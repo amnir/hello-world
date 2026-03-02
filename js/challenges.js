@@ -143,6 +143,7 @@ function generateCountingChallenge() {
 
     return {
         type: 'counting',
+        questionText: `כמה ${fruit} יש פה?`,
         correctIndex,
         render(ctx, area, time) {
             const { x, y, w, h } = area;
@@ -234,6 +235,7 @@ function generateColorChallenge() {
 
     return {
         type: 'colors',
+        questionText: `איפה ${correctColor.name}?`,
         render(ctx, area, time) {
             const { x, y, w, h } = area;
 
@@ -313,6 +315,7 @@ function generateLetterChallenge() {
 
     return {
         type: 'letters',
+        questionText: `מצאו את האות ${correctLetter.name}`,
         render(ctx, area, time) {
             const { x, y, w, h } = area;
 
@@ -390,6 +393,7 @@ function generateShapeChallenge() {
 
     return {
         type: 'shapes',
+        questionText: `מצאו את ה${correctShape.name}`,
         render(ctx, area, time) {
             const { x, y, w, h } = area;
 
@@ -484,6 +488,7 @@ function generatePatternChallenge() {
 
     return {
         type: 'patterns',
+        questionText: 'מה הבא בתור?',
         render(ctx, area, time) {
             const { x, y, w, h } = area;
 

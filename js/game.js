@@ -11,7 +11,7 @@ import {
 import {
     initAudio, playCorrect, playWrong, playStarCollect, playPlace,
     playShoot, playHit, playPop, playClick, playCelebration,
-    playWaveStart, playGameOver, startBgMusic, stopBgMusic,
+    playWaveStart, playGameOver, startBgMusic, stopBgMusic, speak,
 } from './audio.js';
 
 import { DEFENDER_DEFS, ENEMY_DEFS, LEVELS } from './levels.js';
@@ -529,6 +529,11 @@ class Game {
         this.challengeResult = null;
         this.challengeResultTimer = 0;
         this.state = STATE.CHALLENGE;
+
+        // Read the question aloud for kids who can't read yet
+        if (this.activeChallenge.questionText) {
+            speak(this.activeChallenge.questionText);
+        }
     }
 
     spawnEnemy(type, lane) {
