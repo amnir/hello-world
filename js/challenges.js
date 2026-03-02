@@ -768,7 +768,7 @@ function roundRect(ctx, x, y, w, h, r) {
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
-const GENERATORS = {
+export const GENERATORS = {
     counting: generateCountingChallenge,
     colors: generateColorChallenge,
     letters: generateLetterChallenge,

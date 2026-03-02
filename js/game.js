@@ -20,21 +20,14 @@ import {
 import { DEFENDER_DEFS, ENEMY_DEFS, LEVELS } from './levels.js';
 import { generateChallenge } from './challenges.js';
 import { Tutorial } from './tutorial.js';
+import {
+    CANVAS_W, CANVAS_H, ROWS, COLS,
+    GRID_LEFT, GRID_TOP, GRID_RIGHT, GRID_BOTTOM,
+    CELL_W, CELL_H,
+    screenToGrid, gridToScreen, getWaveDelay, getComboTier,
+} from './game-logic.js';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
-
-const CANVAS_W = 960;
-const CANVAS_H = 540;
-const ROWS = 3;
-const COLS = 6;
-
-// Grid layout (enemies come from LEFT, house on RIGHT)
-const GRID_LEFT = 60;
-const GRID_TOP = 100;
-const GRID_RIGHT = 760;
-const GRID_BOTTOM = 500;
-const CELL_W = (GRID_RIGHT - GRID_LEFT) / COLS;   // ~116
-const CELL_H = (GRID_BOTTOM - GRID_TOP) / ROWS;   // ~133
 
 const HOUSE_X = GRID_RIGHT;
 const HOUSE_W = CANVAS_W - GRID_RIGHT;
@@ -323,25 +316,14 @@ class Game {
         }
     }
 
-    // ─── Screen ↔ Grid conversion ───────────────────────────────────────
+    // ─── Screen ↔ Grid conversion (delegated to game-logic.js) ─────────
 
     screenToGrid(sx, sy) {
-        if (sx < GRID_LEFT || sx > GRID_RIGHT || sy < GRID_TOP || sy > GRID_BOTTOM) {
-            return null;
-        }
-        const col = Math.floor((sx - GRID_LEFT) / CELL_W);
-        const row = Math.floor((sy - GRID_TOP) / CELL_H);
-        if (row >= 0 && row < ROWS && col >= 0 && col < COLS) {
-            return { row, col };
-        }
-        return null;
+        return screenToGrid(sx, sy);
     }
 
     gridToScreen(row, col) {
-        return {
-            x: GRID_LEFT + col * CELL_W + CELL_W / 2,
-            y: GRID_TOP + row * CELL_H + CELL_H / 2,
-        };
+        return gridToScreen(row, col);
     }
 
     // ─── Menu Handlers ──────────────────────────────────────────────────
@@ -685,11 +667,7 @@ class Game {
     }
 
     getWaveDelay() {
-        // Later levels/waves get more time between waves to prepare
-        const baseDelay = 6;
-        const levelBonus = Math.min(this.currentLevelIndex, 5) * 0.5; // +0.5s per level, up to +2.5s
-        const waveBonus = Math.floor(this.waveIndex / 2) * 1;         // +1s every 2 waves
-        return baseDelay + levelBonus + waveBonus;
+        return getWaveDelay(this.currentLevelIndex, this.waveIndex);
     }
 
     showChallenge() {
@@ -741,12 +719,7 @@ class Game {
     }
 
     getComboTier() {
-        if (this.comboStreak >= 5) {
-            return { text: '\u200Fמדהים!', color: '#e74c3c', bonusStars: 2, comboSound: true, confetti: true };
-        } else if (this.comboStreak >= 3) {
-            return { text: '\u200Fמצוין!', color: '#f39c12', bonusStars: 1, comboSound: true, confetti: false };
-        }
-        return { text: '\u200Fכל הכבוד!', color: '#2ecc71', bonusStars: 0, comboSound: false, confetti: false };
+        return getComboTier(this.comboStreak);
     }
 
     spawnMiniConfetti() {
