@@ -14,7 +14,13 @@ No build step required. Serve the files with any HTTP server (needed for ES6 mod
 python3 -m http.server
 ```
 
-Then open http://localhost:8000 in a browser. There are no automated tests or linting configured.
+Then open http://localhost:8000 in a browser.
+
+Tests use Vitest. Run with:
+
+```
+npm test
+```
 
 ## Architecture
 

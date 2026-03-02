@@ -1,51 +1,9 @@
 import { describe, it, expect } from 'vitest';
-
-// Replicate pure constants from game.js
-const GRID_LEFT = 60;
-const GRID_TOP = 100;
-const GRID_RIGHT = 760;
-const GRID_BOTTOM = 500;
-const ROWS = 3;
-const COLS = 6;
-const CELL_W = (GRID_RIGHT - GRID_LEFT) / COLS;
-const CELL_H = (GRID_BOTTOM - GRID_TOP) / ROWS;
-
-// Replicate pure functions from game.js
-
-function screenToGrid(sx, sy) {
-    if (sx < GRID_LEFT || sx > GRID_RIGHT || sy < GRID_TOP || sy > GRID_BOTTOM) {
-        return null;
-    }
-    const col = Math.floor((sx - GRID_LEFT) / CELL_W);
-    const row = Math.floor((sy - GRID_TOP) / CELL_H);
-    if (row >= 0 && row < ROWS && col >= 0 && col < COLS) {
-        return { row, col };
-    }
-    return null;
-}
-
-function gridToScreen(row, col) {
-    return {
-        x: GRID_LEFT + col * CELL_W + CELL_W / 2,
-        y: GRID_TOP + row * CELL_H + CELL_H / 2,
-    };
-}
-
-function getWaveDelay(currentLevelIndex, waveIndex) {
-    const baseDelay = 6;
-    const levelBonus = Math.min(currentLevelIndex, 5) * 0.5;
-    const waveBonus = Math.floor(waveIndex / 2) * 1;
-    return baseDelay + levelBonus + waveBonus;
-}
-
-function getComboTier(comboStreak) {
-    if (comboStreak >= 5) {
-        return { text: '\u200Fמדהים!', color: '#e74c3c', bonusStars: 2, comboSound: true, confetti: true };
-    } else if (comboStreak >= 3) {
-        return { text: '\u200Fמצוין!', color: '#f39c12', bonusStars: 1, comboSound: true, confetti: false };
-    }
-    return { text: '\u200Fכל הכבוד!', color: '#2ecc71', bonusStars: 0, comboSound: false, confetti: false };
-}
+import {
+    GRID_LEFT, GRID_TOP, GRID_RIGHT, GRID_BOTTOM,
+    ROWS, COLS, CELL_W, CELL_H,
+    screenToGrid, gridToScreen, getWaveDelay, getComboTier,
+} from '../js/game-logic.js';
 
 describe('screenToGrid()', () => {
     it('returns correct cell for center of grid', () => {

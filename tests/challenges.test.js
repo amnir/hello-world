@@ -1,29 +1,20 @@
 import { describe, it, expect } from 'vitest';
 import { generateChallenge, GENERATORS } from '../js/challenges.js';
 
-// Minimal canvas context mock — enough to let render() populate optionAreas
+// Proxy-based canvas context mock — accepts any property/method call so it
+// won't break if challenge rendering adds new canvas API calls in the future.
 function createMockCtx() {
-    return {
-        fillStyle: '',
-        strokeStyle: '',
-        lineWidth: 0,
-        font: '',
-        textAlign: '',
-        textBaseline: '',
-        fillText() {},
-        fillRect() {},
-        strokeRect() {},
-        beginPath() {},
-        moveTo() {},
-        lineTo() {},
-        closePath() {},
-        arc() {},
-        fill() {},
-        stroke() {},
-        quadraticCurveTo() {},
-        bezierCurveTo() {},
-        setLineDash() {},
-    };
+    return new Proxy({}, {
+        get(target, prop) {
+            if (prop in target) return target[prop];
+            // Return a no-op function for any unknown method
+            return () => {};
+        },
+        set(target, prop, value) {
+            target[prop] = value;
+            return true;
+        },
+    });
 }
 
 const AREA = { x: 0, y: 0, w: 960, h: 540 };
