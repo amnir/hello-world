@@ -7,16 +7,16 @@
 // ─── Hebrew Data ─────────────────────────────────────────────────────────────
 
 const HEBREW_LETTERS = [
-    { letter: 'א', name: 'אלף' },
-    { letter: 'ב', name: 'בית' },
-    { letter: 'ג', name: 'גימל' },
-    { letter: 'ד', name: 'דלת' },
-    { letter: 'ה', name: 'הא' },
-    { letter: 'ו', name: 'וו' },
-    { letter: 'ז', name: 'זין' },
-    { letter: 'ח', name: 'חית' },
-    { letter: 'ט', name: 'טית' },
-    { letter: 'י', name: 'יוד' },
+    { letter: 'א', name: 'אלף', spoken: 'אָלֶף' },
+    { letter: 'ב', name: 'בית', spoken: 'בֵּית' },
+    { letter: 'ג', name: 'גימל', spoken: 'גִּימֶל' },
+    { letter: 'ד', name: 'דלת', spoken: 'דָּלֶת' },
+    { letter: 'ה', name: 'הא', spoken: 'הֵא' },
+    { letter: 'ו', name: 'וו', spoken: 'וָו' },
+    { letter: 'ז', name: 'זין', spoken: 'זַיִן' },
+    { letter: 'ח', name: 'חית', spoken: 'חֵית' },
+    { letter: 'ט', name: 'טית', spoken: 'טֵית' },
+    { letter: 'י', name: 'יוד', spoken: 'יוֹד' },
 ];
 
 const COLORS = [
@@ -36,7 +36,16 @@ const SHAPES = [
     { name: 'לב', nameEn: 'heart' },
 ];
 
-const FRUIT_EMOJI = ['🍎', '🍊', '🍋', '🍐', '🍇', '🍓', '🍌', '🍉'];
+const FRUITS = [
+    { emoji: '🍎', plural: 'תפוחים' },
+    { emoji: '🍊', plural: 'תפוזים' },
+    { emoji: '🍋', plural: 'לימונים' },
+    { emoji: '🍐', plural: 'אגסים' },
+    { emoji: '🍇', plural: 'אשכולות ענבים' },
+    { emoji: '🍓', plural: 'תותים' },
+    { emoji: '🍌', plural: 'בננות' },
+    { emoji: '🍉', plural: 'אבטיחים' },
+];
 
 const ANIMALS = [
     { emoji: '🐶', name: 'כלב', habitat: 'land', baby: '🐕' },
@@ -160,7 +169,8 @@ function drawShapeAt(ctx, shape, x, y, size, color = '#3498db') {
  */
 function generateCountingChallenge() {
     const correctCount = randInt(1, 7);
-    const fruit = randChoice(FRUIT_EMOJI);
+    const fruitObj = randChoice(FRUITS);
+    const fruit = fruitObj.emoji;
 
     // Generate wrong answers that are close but different
     let options = [correctCount];
@@ -176,7 +186,7 @@ function generateCountingChallenge() {
 
     return {
         type: 'counting',
-        questionText: `כמה ${fruit} יש פה?`,
+        questionText: `כמה ${fruitObj.plural} יש פה?`,
         correctIndex,
         render(ctx, area, time) {
             const { x, y, w, h } = area;
@@ -268,7 +278,7 @@ function generateColorChallenge() {
 
     return {
         type: 'colors',
-        questionText: `איפה ${correctColor.name}?`,
+        questionText: `איפה הצבע ה${correctColor.name}?`,
         render(ctx, area, time) {
             const { x, y, w, h } = area;
 
@@ -339,7 +349,7 @@ function generateLetterChallenge() {
 
     return {
         type: 'letters',
-        questionText: `מצאו את האות ${correctLetter.name}`,
+        questionText: `מצאו את האות ${correctLetter.spoken}`,
         render(ctx, area, time) {
             const { x, y, w, h } = area;
 
