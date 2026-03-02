@@ -345,4 +345,169 @@ export const LEVELS = [
         ],
         stickerReward: 'flower',
     },
+    // ── Level 7: The Zoo ──
+    {
+        id: 7,
+        name: 'גן החיות',  // The Zoo
+        availableDefenders: ['starMaker', 'numberBuddy', 'colorFlower', 'letterLion', 'shapeShield', 'patternPeacock', 'musicBird'],
+        challengeTypes: ['counting', 'colors', 'animals'],
+        startingStars: 6,
+        waves: [
+            { enemies: [
+                { type: 'muddleCloud', lane: 0, delay: 0 },
+                { type: 'muddleCloud', lane: 1, delay: 3 },
+                { type: 'muddleCloud', lane: 2, delay: 5 },
+            ]},
+            { enemies: [
+                { type: 'messMonster', lane: 0, delay: 0 },
+                { type: 'messMonster', lane: 2, delay: 3 },
+                { type: 'bubbleTrouble', lane: 1, delay: 5 },
+            ]},
+            { enemies: [
+                { type: 'sleepySnail', lane: 1, delay: 0 },
+                { type: 'gigglyGremlin', lane: 0, delay: 3 },
+                { type: 'gigglyGremlin', lane: 2, delay: 4 },
+                { type: 'messMonster', lane: 1, delay: 7 },
+            ]},
+            { enemies: [
+                { type: 'messMonster', lane: 0, delay: 0 },
+                { type: 'messMonster', lane: 1, delay: 2 },
+                { type: 'messMonster', lane: 2, delay: 4 },
+                { type: 'bubbleTrouble', lane: 0, delay: 6 },
+                { type: 'bubbleTrouble', lane: 2, delay: 8 },
+            ]},
+        ],
+        stickerReward: 'diamond',
+    },
+    // ── Level 8: Nature Walk ──
+    {
+        id: 8,
+        name: 'טיול בטבע',  // Nature Walk
+        availableDefenders: ['starMaker', 'numberBuddy', 'colorFlower', 'letterLion', 'shapeShield', 'patternPeacock', 'musicBird'],
+        challengeTypes: ['animals', 'patterns', 'shapes'],
+        startingStars: 6,
+        waves: [
+            { enemies: [
+                { type: 'muddleCloud', lane: 0, delay: 0 },
+                { type: 'messMonster', lane: 1, delay: 2 },
+                { type: 'muddleCloud', lane: 2, delay: 4 },
+            ]},
+            { enemies: [
+                { type: 'gigglyGremlin', lane: 0, delay: 0 },
+                { type: 'gigglyGremlin', lane: 1, delay: 1 },
+                { type: 'gigglyGremlin', lane: 2, delay: 2 },
+                { type: 'sleepySnail', lane: 1, delay: 5 },
+            ]},
+            { enemies: [
+                { type: 'messMonster', lane: 0, delay: 0 },
+                { type: 'bubbleTrouble', lane: 1, delay: 3 },
+                { type: 'messMonster', lane: 2, delay: 5 },
+                { type: 'gigglyGremlin', lane: 0, delay: 7 },
+                { type: 'gigglyGremlin', lane: 1, delay: 8 },
+            ]},
+            { enemies: [
+                { type: 'sleepySnail', lane: 0, delay: 0 },
+                { type: 'sleepySnail', lane: 2, delay: 3 },
+                { type: 'bubbleTrouble', lane: 1, delay: 5 },
+                { type: 'messMonster', lane: 0, delay: 7 },
+                { type: 'messMonster', lane: 1, delay: 9 },
+                { type: 'messMonster', lane: 2, delay: 11 },
+            ]},
+        ],
+        stickerReward: 'rainbow',
+    },
+    // ── Level 9: The Big Challenge ──
+    {
+        id: 9,
+        name: 'האתגר הגדול',  // The Big Challenge
+        availableDefenders: ['starMaker', 'numberBuddy', 'colorFlower', 'letterLion', 'shapeShield', 'patternPeacock', 'musicBird'],
+        challengeTypes: ['counting', 'colors', 'letters', 'shapes', 'patterns', 'animals'],
+        startingStars: 7,
+        waves: [
+            { enemies: [
+                { type: 'messMonster', lane: 0, delay: 0 },
+                { type: 'messMonster', lane: 1, delay: 2 },
+                { type: 'messMonster', lane: 2, delay: 4 },
+            ]},
+            { enemies: [
+                { type: 'sleepySnail', lane: 0, delay: 0 },
+                { type: 'bubbleTrouble', lane: 1, delay: 3 },
+                { type: 'sleepySnail', lane: 2, delay: 5 },
+            ]},
+            { enemies: [
+                { type: 'gigglyGremlin', lane: 0, delay: 0 },
+                { type: 'gigglyGremlin', lane: 1, delay: 1 },
+                { type: 'gigglyGremlin', lane: 2, delay: 2 },
+                { type: 'gigglyGremlin', lane: 0, delay: 4 },
+                { type: 'gigglyGremlin', lane: 1, delay: 5 },
+                { type: 'gigglyGremlin', lane: 2, delay: 6 },
+            ]},
+            { enemies: [
+                { type: 'messMonster', lane: 0, delay: 0 },
+                { type: 'sleepySnail', lane: 1, delay: 2 },
+                { type: 'messMonster', lane: 2, delay: 4 },
+                { type: 'bubbleTrouble', lane: 0, delay: 6 },
+                { type: 'bubbleTrouble', lane: 2, delay: 8 },
+            ]},
+            { enemies: [
+                { type: 'kingChaos', lane: 1, delay: 0 },
+                { type: 'messMonster', lane: 0, delay: 3 },
+                { type: 'messMonster', lane: 2, delay: 5 },
+                { type: 'bubbleTrouble', lane: 0, delay: 7 },
+                { type: 'bubbleTrouble', lane: 2, delay: 9 },
+            ]},
+        ],
+        stickerReward: 'medal',
+    },
+    // ── Level 10: King of Wisdom ──
+    {
+        id: 10,
+        name: 'מלך החוכמה',  // King of Wisdom
+        availableDefenders: ['starMaker', 'numberBuddy', 'colorFlower', 'letterLion', 'shapeShield', 'patternPeacock', 'musicBird'],
+        challengeTypes: ['counting', 'colors', 'letters', 'shapes', 'patterns', 'animals'],
+        startingStars: 8,
+        waves: [
+            { enemies: [
+                { type: 'messMonster', lane: 0, delay: 0 },
+                { type: 'messMonster', lane: 1, delay: 2 },
+                { type: 'messMonster', lane: 2, delay: 4 },
+                { type: 'sleepySnail', lane: 1, delay: 6 },
+            ]},
+            { enemies: [
+                { type: 'sleepySnail', lane: 0, delay: 0 },
+                { type: 'sleepySnail', lane: 2, delay: 3 },
+                { type: 'bubbleTrouble', lane: 1, delay: 5 },
+                { type: 'gigglyGremlin', lane: 0, delay: 7 },
+                { type: 'gigglyGremlin', lane: 1, delay: 8 },
+                { type: 'gigglyGremlin', lane: 2, delay: 9 },
+            ]},
+            { enemies: [
+                { type: 'messMonster', lane: 0, delay: 0 },
+                { type: 'bubbleTrouble', lane: 1, delay: 2 },
+                { type: 'messMonster', lane: 2, delay: 4 },
+                { type: 'sleepySnail', lane: 0, delay: 6 },
+                { type: 'sleepySnail', lane: 2, delay: 8 },
+            ]},
+            { enemies: [
+                { type: 'gigglyGremlin', lane: 0, delay: 0 },
+                { type: 'gigglyGremlin', lane: 1, delay: 0.5 },
+                { type: 'gigglyGremlin', lane: 2, delay: 1 },
+                { type: 'messMonster', lane: 0, delay: 3 },
+                { type: 'messMonster', lane: 1, delay: 4 },
+                { type: 'messMonster', lane: 2, delay: 5 },
+                { type: 'bubbleTrouble', lane: 0, delay: 7 },
+                { type: 'bubbleTrouble', lane: 1, delay: 8 },
+                { type: 'bubbleTrouble', lane: 2, delay: 9 },
+            ]},
+            { enemies: [
+                { type: 'kingChaos', lane: 1, delay: 0 },
+                { type: 'messMonster', lane: 0, delay: 3 },
+                { type: 'messMonster', lane: 2, delay: 4 },
+                { type: 'kingChaos', lane: 0, delay: 8 },
+                { type: 'gigglyGremlin', lane: 1, delay: 10 },
+                { type: 'gigglyGremlin', lane: 2, delay: 11 },
+            ]},
+        ],
+        stickerReward: 'trophy',
+    },
 ];
