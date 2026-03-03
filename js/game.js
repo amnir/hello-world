@@ -1325,28 +1325,13 @@ class Game {
             const alpha = 0.3 + Math.sin(this.time * s.speed + s.phase) * 0.35 + 0.35;
             const baseSz = sizeCats[s.cat];
             const sz = baseSz + Math.sin(this.time * s.speed + s.phase) * (baseSz * 0.4);
-            ctx.save();
-            ctx.globalAlpha = alpha;
-            ctx.fillStyle = '#fff';
-            ctx.beginPath();
-            ctx.moveTo(s.x, s.y - sz);
-            ctx.lineTo(s.x + sz * 0.3, s.y - sz * 0.3);
-            ctx.lineTo(s.x + sz, s.y);
-            ctx.lineTo(s.x + sz * 0.3, s.y + sz * 0.3);
-            ctx.lineTo(s.x, s.y + sz);
-            ctx.lineTo(s.x - sz * 0.3, s.y + sz * 0.3);
-            ctx.lineTo(s.x - sz, s.y);
-            ctx.lineTo(s.x - sz * 0.3, s.y - sz * 0.3);
-            ctx.closePath();
-            ctx.fill();
-            ctx.restore();
+            this.drawSparkle(ctx, s.x, s.y, sz, '#fff', alpha);
         }
 
         // ── God Rays behind sign ──
         const raysCenterX = CANVAS_W / 2;
         const raysCenterY = 120;
         // Bright glow circle behind sign (stronger)
-        ctx.save();
         const godGlow = ctx.createRadialGradient(raysCenterX, raysCenterY, 10, raysCenterX, raysCenterY, 250);
         godGlow.addColorStop(0, 'rgba(255,250,220,0.5)');
         godGlow.addColorStop(0.3, 'rgba(255,240,180,0.2)');
@@ -1354,7 +1339,6 @@ class Game {
         godGlow.addColorStop(1, 'rgba(255,230,150,0)');
         ctx.fillStyle = godGlow;
         ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-        ctx.restore();
 
         // Triangular light beams (stronger, wider)
         ctx.save();
@@ -1441,7 +1425,6 @@ class Game {
         ctx.restore();
 
         // Moss on top edge of sign
-        ctx.save();
         for (let i = 0; i < 18; i++) {
             const mx = signX + 30 + i * (signW - 60) / 17;
             const my = signY + 2 + Math.sin(i * 2.3) * 3;
@@ -1451,7 +1434,6 @@ class Game {
             ctx.ellipse(mx, my, mr, mr * 0.5, 0, 0, Math.PI * 2);
             ctx.fill();
         }
-        ctx.restore();
 
         // ── Golden sparkles around sign edges ──
         const signSparkles = [
@@ -1469,21 +1451,7 @@ class Game {
         for (const s of signSparkles) {
             const alpha = 0.3 + Math.sin(this.time * s.speed + s.phase) * 0.35 + 0.35;
             const sz = 3 + Math.sin(this.time * s.speed + s.phase) * 1.5;
-            ctx.save();
-            ctx.globalAlpha = alpha;
-            ctx.fillStyle = '#ffd700';
-            ctx.beginPath();
-            ctx.moveTo(s.x, s.y - sz);
-            ctx.lineTo(s.x + sz * 0.3, s.y - sz * 0.3);
-            ctx.lineTo(s.x + sz, s.y);
-            ctx.lineTo(s.x + sz * 0.3, s.y + sz * 0.3);
-            ctx.lineTo(s.x, s.y + sz);
-            ctx.lineTo(s.x - sz * 0.3, s.y + sz * 0.3);
-            ctx.lineTo(s.x - sz, s.y);
-            ctx.lineTo(s.x - sz * 0.3, s.y - sz * 0.3);
-            ctx.closePath();
-            ctx.fill();
-            ctx.restore();
+            this.drawSparkle(ctx, s.x, s.y, sz, '#ffd700', alpha);
         }
 
         // ── Green Vines on Sign (4 vines) ──
@@ -1496,69 +1464,10 @@ class Game {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.font = `bold 64px ${F}`;
-
-        // "שומרי" in blue
-        const titleY1 = signY + 72;
-        // Layer 1: Deep shadow
-        ctx.fillStyle = 'rgba(0,0,0,0.25)';
-        ctx.fillText('שומרי', CANVAS_W / 2 + 3, titleY1 + 5);
-        // Layer 2: Thick outline
-        ctx.strokeStyle = '#0d2137';
-        ctx.lineWidth = 7;
-        ctx.lineJoin = 'round';
-        ctx.strokeText('שומרי', CANVAS_W / 2, titleY1);
-        // Layer 3: Gradient fill
-        const blueGrad = ctx.createLinearGradient(
-            CANVAS_W / 2 - 100, titleY1 - 25,
-            CANVAS_W / 2 + 100, titleY1 + 25
-        );
-        blueGrad.addColorStop(0, '#1a5276');
-        blueGrad.addColorStop(0.3, '#2e86c1');
-        blueGrad.addColorStop(0.5, '#5dade2');
-        blueGrad.addColorStop(0.7, '#2e86c1');
-        blueGrad.addColorStop(1, '#1a5276');
-        ctx.fillStyle = blueGrad;
-        ctx.fillText('שומרי', CANVAS_W / 2, titleY1);
-        // Layer 4: Glossy highlight (clipped top-half)
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(0, titleY1 - 35, CANVAS_W, 30);
-        ctx.clip();
-        ctx.fillStyle = 'rgba(255,255,255,0.2)';
-        ctx.fillText('שומרי', CANVAS_W / 2, titleY1);
-        ctx.restore();
-
-        // "החוכמה" in orange
-        const titleY2 = signY + 143;
-        // Layer 1: Deep shadow
-        ctx.font = `bold 64px ${F}`;
-        ctx.fillStyle = 'rgba(0,0,0,0.25)';
-        ctx.fillText('החוכמה', CANVAS_W / 2 + 3, titleY2 + 5);
-        // Layer 2: Thick outline
-        ctx.strokeStyle = '#5a2d00';
-        ctx.lineWidth = 7;
-        ctx.lineJoin = 'round';
-        ctx.strokeText('החוכמה', CANVAS_W / 2, titleY2);
-        // Layer 3: Gradient fill
-        const orangeGrad = ctx.createLinearGradient(
-            CANVAS_W / 2 - 100, titleY2 - 25,
-            CANVAS_W / 2 + 100, titleY2 + 25
-        );
-        orangeGrad.addColorStop(0, '#c0392b');
-        orangeGrad.addColorStop(0.3, '#e67e22');
-        orangeGrad.addColorStop(0.5, '#f5b041');
-        orangeGrad.addColorStop(0.7, '#e67e22');
-        orangeGrad.addColorStop(1, '#c0392b');
-        ctx.fillStyle = orangeGrad;
-        ctx.fillText('החוכמה', CANVAS_W / 2, titleY2);
-        // Layer 4: Glossy highlight (clipped top-half)
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(0, titleY2 - 35, CANVAS_W, 30);
-        ctx.clip();
-        ctx.fillStyle = 'rgba(255,255,255,0.18)';
-        ctx.fillText('החוכמה', CANVAS_W / 2, titleY2);
-        ctx.restore();
+        this.drawGlossyTitle(ctx, 'שומרי', CANVAS_W / 2, signY + 72,
+            '#0d2137', ['#1a5276', '#2e86c1', '#5dade2', '#2e86c1', '#1a5276'], 0.2);
+        this.drawGlossyTitle(ctx, 'החוכמה', CANVAS_W / 2, signY + 143,
+            '#5a2d00', ['#c0392b', '#e67e22', '#f5b041', '#e67e22', '#c0392b'], 0.18);
 
         // ── Play Button with Pulsing Glow ──
         const btnW = 200, btnH = 60;
@@ -1759,12 +1668,10 @@ class Game {
             const dx = defStartX + i * defSpacing;
             const dy = defBaseY + Math.sin(this.time * 2 + i * 0.9) * 3;
             // Elliptical ground shadow
-            ctx.save();
             ctx.fillStyle = 'rgba(0,0,0,0.15)';
             ctx.beginPath();
             ctx.ellipse(dx, defBaseY + 26, 22, 6, 0, 0, Math.PI * 2);
             ctx.fill();
-            ctx.restore();
             DEFENDER_SPRITES[defenderNames[i]](ctx, dx, dy, 48, this.time);
         }
 
@@ -3153,9 +3060,7 @@ class Game {
         ctx.save();
         const sway = Math.sin(time * 0.8) * 2;
 
-        // Main branch
-        ctx.strokeStyle = '#4a3018';
-        ctx.lineWidth = 8;
+        // Main branch (reuse path for dark + light strokes)
         ctx.lineCap = 'round';
         ctx.beginPath();
         ctx.moveTo(originX, originY);
@@ -3164,17 +3069,11 @@ class Game {
             originX + dir * 130, 40 + sway,
             originX + dir * 200, 100 + sway * 1.5
         );
+        ctx.strokeStyle = '#4a3018';
+        ctx.lineWidth = 8;
         ctx.stroke();
-        // Lighter inner line
         ctx.strokeStyle = '#6b4f2e';
         ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(originX, originY);
-        ctx.bezierCurveTo(
-            originX + dir * 60, 20 + sway,
-            originX + dir * 130, 40 + sway,
-            originX + dir * 200, 100 + sway * 1.5
-        );
         ctx.stroke();
 
         // Second branch (drooping down)
@@ -3199,21 +3098,17 @@ class Game {
 
         // Very dense leaf clusters (many overlapping)
         const clusters = [
-            // Top-edge coverage (near screen corner)
             { x: originX + dir * 10, y: -5 + sway * 0.1, r: 35 },
             { x: originX + dir * 40, y: 0 + sway * 0.2, r: 38 },
             { x: originX + dir * 70, y: 5 + sway * 0.3, r: 35 },
-            // Middle layer
             { x: originX + dir * 25, y: 20 + sway * 0.3, r: 32 },
             { x: originX + dir * 55, y: 25 + sway * 0.4, r: 36 },
             { x: originX + dir * 90, y: 20 + sway * 0.5, r: 30 },
             { x: originX + dir * 120, y: 35 + sway * 0.6, r: 34 },
-            // Lower layer
             { x: originX + dir * 45, y: 45 + sway * 0.5, r: 28 },
             { x: originX + dir * 80, y: 50 + sway * 0.7, r: 30 },
             { x: originX + dir * 110, y: 60 + sway * 0.8, r: 26 },
             { x: originX + dir * 150, y: 70 + sway * 1.0, r: 28 },
-            // Deepest hanging clusters
             { x: originX + dir * 65, y: 70 + sway * 0.8, r: 22 },
             { x: originX + dir * 100, y: 85 + sway * 0.9, r: 24 },
             { x: originX + dir * 140, y: 95 + sway * 1.1, r: 20 },
@@ -3222,26 +3117,7 @@ class Game {
             { x: originX + dir * 160, y: 125 + sway * 1.4, r: 16 },
         ];
         for (const cl of clusters) {
-            // Dark back
-            ctx.fillStyle = '#145a32';
-            ctx.beginPath();
-            ctx.ellipse(cl.x, cl.y + 4, cl.r * 1.05, cl.r * 0.75, 0, 0, Math.PI * 2);
-            ctx.fill();
-            // Main leaf mass
-            ctx.fillStyle = '#1e8449';
-            ctx.beginPath();
-            ctx.ellipse(cl.x, cl.y, cl.r, cl.r * 0.7, 0, 0, Math.PI * 2);
-            ctx.fill();
-            // Lighter front
-            ctx.fillStyle = '#27ae60';
-            ctx.beginPath();
-            ctx.ellipse(cl.x + dir * 3, cl.y - 2, cl.r * 0.7, cl.r * 0.5, 0, 0, Math.PI * 2);
-            ctx.fill();
-            // Highlight
-            ctx.fillStyle = 'rgba(46,204,113,0.3)';
-            ctx.beginPath();
-            ctx.ellipse(cl.x - cl.r * 0.15, cl.y - cl.r * 0.2, cl.r * 0.35, cl.r * 0.25, 0, 0, Math.PI * 2);
-            ctx.fill();
+            this.drawLeafCluster(ctx, cl.x, cl.y, cl.r, dir);
         }
         ctx.restore();
     }
@@ -3357,6 +3233,66 @@ class Game {
     }
 
     /** Draw irregular/organic stone sign shape with bezier edges */
+    /** Draw an 8-point sparkle star */
+    drawSparkle(ctx, x, y, sz, color, alpha) {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(x, y - sz);
+        ctx.lineTo(x + sz * 0.3, y - sz * 0.3);
+        ctx.lineTo(x + sz, y);
+        ctx.lineTo(x + sz * 0.3, y + sz * 0.3);
+        ctx.lineTo(x, y + sz);
+        ctx.lineTo(x - sz * 0.3, y + sz * 0.3);
+        ctx.lineTo(x - sz, y);
+        ctx.lineTo(x - sz * 0.3, y - sz * 0.3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    /** Draw 4-layer glossy title text: shadow → outline → gradient → clipped highlight */
+    drawGlossyTitle(ctx, text, x, y, outlineColor, gradColors, highlightAlpha) {
+        ctx.fillStyle = 'rgba(0,0,0,0.25)';
+        ctx.fillText(text, x + 3, y + 5);
+        ctx.strokeStyle = outlineColor;
+        ctx.lineWidth = 7;
+        ctx.lineJoin = 'round';
+        ctx.strokeText(text, x, y);
+        const grad = ctx.createLinearGradient(x - 100, y - 25, x + 100, y + 25);
+        gradColors.forEach((c, i) => grad.addColorStop(i / (gradColors.length - 1), c));
+        ctx.fillStyle = grad;
+        ctx.fillText(text, x, y);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, y - 35, CANVAS_W, 30);
+        ctx.clip();
+        ctx.fillStyle = `rgba(255,255,255,${highlightAlpha})`;
+        ctx.fillText(text, x, y);
+        ctx.restore();
+    }
+
+    /** Draw a 4-ellipse leaf cluster (used in overhanging branches) */
+    drawLeafCluster(ctx, x, y, r, dir) {
+        ctx.fillStyle = '#145a32';
+        ctx.beginPath();
+        ctx.ellipse(x, y + 4, r * 1.05, r * 0.75, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#1e8449';
+        ctx.beginPath();
+        ctx.ellipse(x, y, r, r * 0.7, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#27ae60';
+        ctx.beginPath();
+        ctx.ellipse(x + dir * 3, y - 2, r * 0.7, r * 0.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(46,204,113,0.3)';
+        ctx.beginPath();
+        ctx.ellipse(x - r * 0.15, y - r * 0.2, r * 0.35, r * 0.25, 0, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
     drawSignShape(ctx, x, y, w, h) {
         const r = 18;
         ctx.beginPath();
