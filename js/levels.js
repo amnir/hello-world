@@ -159,7 +159,7 @@ export const LEVELS = [
         id: 1,
         name: 'הגינה שלנו',  // Our Garden
         availableDefenders: ['starMaker', 'numberBuddy'],
-        challengeTypes: ['counting'],
+        challengeTypes: ['counting', 'countCompare', 'sizeCompare'],
         startingStars: 4,
         waves: [
             { enemies: [{ type: 'muddleCloud', lane: 1, delay: 0 }] },
@@ -180,7 +180,7 @@ export const LEVELS = [
         id: 2,
         name: 'עולם הצבעים',  // World of Colors
         availableDefenders: ['starMaker', 'numberBuddy', 'colorFlower'],
-        challengeTypes: ['counting', 'colors'],
+        challengeTypes: ['counting', 'countCompare', 'colors', 'sizeCompare', 'pairMatch'],
         startingStars: 5,
         waves: [
             { enemies: [
@@ -205,7 +205,7 @@ export const LEVELS = [
         id: 3,
         name: 'אותיות קסומות',  // Magic Letters
         availableDefenders: ['starMaker', 'numberBuddy', 'colorFlower', 'letterLion'],
-        challengeTypes: ['counting', 'colors', 'letters'],
+        challengeTypes: ['counting', 'colors', 'letters', 'mathCompare', 'pairMatch', 'countExact'],
         startingStars: 5,
         waves: [
             { enemies: [
@@ -235,7 +235,7 @@ export const LEVELS = [
         id: 4,
         name: 'ממלכת הצורות',  // Kingdom of Shapes
         availableDefenders: ['starMaker', 'numberBuddy', 'colorFlower', 'letterLion', 'shapeShield'],
-        challengeTypes: ['counting', 'colors', 'letters', 'shapes'],
+        challengeTypes: ['counting', 'colors', 'letters', 'shapes', 'mathCompare', 'nextNumber', 'countExact'],
         startingStars: 6,
         waves: [
             { enemies: [
@@ -268,7 +268,7 @@ export const LEVELS = [
         id: 5,
         name: 'מלך הבלגן',  // King Chaos
         availableDefenders: ['starMaker', 'numberBuddy', 'colorFlower', 'letterLion', 'shapeShield', 'patternPeacock'],
-        challengeTypes: ['counting', 'colors', 'letters', 'shapes', 'patterns'],
+        challengeTypes: ['counting', 'colors', 'letters', 'shapes', 'shapeColor', 'patterns', 'oddOneOut', 'nextNumber'],
         startingStars: 7,
         waves: [
             { enemies: [
@@ -306,7 +306,7 @@ export const LEVELS = [
         id: 6,
         name: 'קונצרט בגינה',  // Concert in the Garden
         availableDefenders: ['starMaker', 'numberBuddy', 'colorFlower', 'letterLion', 'shapeShield', 'patternPeacock', 'musicBird'],
-        challengeTypes: ['counting', 'colors', 'letters', 'shapes', 'patterns'],
+        challengeTypes: ['counting', 'colors', 'letters', 'shapes', 'shapeColor', 'patterns', 'oddOneOut', 'mathCompare', 'countCompare'],
         startingStars: 6,
         waves: [
             { enemies: [
@@ -350,7 +350,7 @@ export const LEVELS = [
         id: 7,
         name: 'גן החיות',  // The Zoo
         availableDefenders: ['starMaker', 'numberBuddy', 'colorFlower', 'letterLion', 'shapeShield', 'patternPeacock', 'musicBird'],
-        challengeTypes: ['counting', 'colors', 'animals'],
+        challengeTypes: ['counting', 'colors', 'animals', 'countCompare', 'oddOneOut', 'pairMatch', 'sizeCompare'],
         startingStars: 6,
         waves: [
             { enemies: [
@@ -384,7 +384,7 @@ export const LEVELS = [
         id: 8,
         name: 'טיול בטבע',  // Nature Walk
         availableDefenders: ['starMaker', 'numberBuddy', 'colorFlower', 'letterLion', 'shapeShield', 'patternPeacock', 'musicBird'],
-        challengeTypes: ['animals', 'patterns', 'shapes'],
+        challengeTypes: ['animals', 'patterns', 'shapes', 'shapeColor', 'mathCompare', 'countExact', 'nextNumber'],
         startingStars: 6,
         waves: [
             { enemies: [
@@ -421,7 +421,7 @@ export const LEVELS = [
         id: 9,
         name: 'האתגר הגדול',  // The Big Challenge
         availableDefenders: ['starMaker', 'numberBuddy', 'colorFlower', 'letterLion', 'shapeShield', 'patternPeacock', 'musicBird'],
-        challengeTypes: ['counting', 'colors', 'letters', 'shapes', 'patterns', 'animals'],
+        challengeTypes: ['counting', 'colors', 'letters', 'shapes', 'patterns', 'animals', 'shapeColor', 'mathCompare', 'countCompare', 'oddOneOut', 'countExact', 'nextNumber', 'sizeCompare', 'pairMatch'],
         startingStars: 7,
         waves: [
             { enemies: [
@@ -464,7 +464,7 @@ export const LEVELS = [
         id: 10,
         name: 'מלך החוכמה',  // King of Wisdom
         availableDefenders: ['starMaker', 'numberBuddy', 'colorFlower', 'letterLion', 'shapeShield', 'patternPeacock', 'musicBird'],
-        challengeTypes: ['counting', 'colors', 'letters', 'shapes', 'patterns', 'animals'],
+        challengeTypes: ['counting', 'colors', 'letters', 'shapes', 'patterns', 'animals', 'shapeColor', 'mathCompare', 'countCompare', 'oddOneOut', 'countExact', 'nextNumber', 'sizeCompare', 'pairMatch'],
         startingStars: 8,
         waves: [
             { enemies: [
