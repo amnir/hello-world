@@ -3232,7 +3232,6 @@ class Game {
         ctx.closePath();
     }
 
-    /** Draw irregular/organic stone sign shape with bezier edges */
     /** Draw an 8-point sparkle star */
     drawSparkle(ctx, x, y, sz, color, alpha) {
         ctx.save();
@@ -3293,6 +3292,7 @@ class Game {
         ctx.fill();
     }
 
+    /** Draw irregular/organic stone sign shape with bezier edges */
     drawSignShape(ctx, x, y, w, h) {
         const r = 18;
         ctx.beginPath();
