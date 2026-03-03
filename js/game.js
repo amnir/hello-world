@@ -3388,6 +3388,6 @@ function drawLoadingScreen(progress) {
 }
 
 drawLoadingScreen(0);
-loadDefenderImages((loaded, total) => drawLoadingScreen(loaded / total)).then(() => {
-    const game = new Game(canvas);
-});
+loadDefenderImages((loaded, total) => drawLoadingScreen(loaded / total))
+    .catch((err) => console.warn('Image preload failed, using procedural sprites:', err))
+    .then(() => new Game(canvas));

@@ -13,11 +13,14 @@ function withImage(typeName, proceduralFn, transformFn) {
         const img = getDefenderImage(typeName);
         if (!img) return proceduralFn(ctx, x, y, size, time);
         ctx.save();
-        ctx.translate(x, y);
-        if (transformFn) transformFn(ctx, time);
-        const s = size * 2.8;
-        ctx.drawImage(img, -s / 2, -s / 2, s, s);
-        ctx.restore();
+        try {
+            ctx.translate(x, y);
+            if (transformFn) transformFn(ctx, time);
+            const s = size * 2.8;
+            ctx.drawImage(img, -s / 2, -s / 2, s, s);
+        } finally {
+            ctx.restore();
+        }
     };
 }
 

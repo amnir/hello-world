@@ -15,27 +15,29 @@ const DEFENDER_IMAGES = {
 const cache = {};
 
 export function getDefenderImage(typeName) {
-    const entry = cache[typeName];
-    return (entry && entry.loaded) ? entry.img : null;
+    return cache[typeName] || null;
 }
 
 export function loadDefenderImages(onProgress) {
     const entries = Object.entries(DEFENDER_IMAGES);
     let loaded = 0;
 
+    function done() {
+        loaded++;
+        if (onProgress) onProgress(loaded, entries.length);
+    }
+
     return Promise.all(entries.map(([name, src]) => {
         return new Promise((resolve) => {
             const img = new Image();
             img.onload = () => {
-                cache[name] = { img, loaded: true };
-                loaded++;
-                if (onProgress) onProgress(loaded, entries.length);
+                cache[name] = img;
+                done();
                 resolve();
             };
             img.onerror = () => {
-                cache[name] = { img: null, loaded: false };
-                loaded++;
-                if (onProgress) onProgress(loaded, entries.length);
+                console.warn(`Failed to load defender image: ${name} (${src})`);
+                done();
                 resolve();
             };
             img.src = src;
