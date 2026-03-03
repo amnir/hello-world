@@ -31,11 +31,11 @@ const COLORS = [
 ];
 
 const SHAPES = [
-    { name: 'עיגול', nameEn: 'circle' },
-    { name: 'ריבוע', nameEn: 'square' },
-    { name: 'משולש', nameEn: 'triangle' },
-    { name: 'כוכב', nameEn: 'star' },
-    { name: 'לב', nameEn: 'heart' },
+    { name: 'עיגול', nameEn: 'circle', emoji: '🔴' },
+    { name: 'ריבוע', nameEn: 'square', emoji: '🟧' },
+    { name: 'משולש', nameEn: 'triangle', emoji: '🔺' },
+    { name: 'כוכב', nameEn: 'star', emoji: '⭐' },
+    { name: 'לב', nameEn: 'heart', emoji: '❤️' },
 ];
 
 const FRUITS = [
@@ -444,8 +444,6 @@ function generateShapeChallenge() {
     const selected = shuffle(SHAPES).slice(0, 3);
     const correctIdx = randInt(0, 2);
     const correctShape = selected[correctIdx];
-    const shapeColor = randChoice(COLORS).color;
-
     return {
         type: 'shapes',
         questionText: `מצאו את ה${correctShape.name}`,
@@ -459,7 +457,7 @@ function generateShapeChallenge() {
             ctx.textBaseline = 'middle';
             ctx.fillText('🔊', x + w / 2, y + h * 0.25);
 
-            // Answer options: 3 shapes
+            // Answer options: 3 shape emoji
             this.optionAreas = [];
             const btnSize = Math.min(w * 0.24, h * 0.28);
             const spacing = w * 0.28;
@@ -481,7 +479,10 @@ function generateShapeChallenge() {
                     ctx.stroke();
                 }
 
-                drawShapeAt(ctx, shape.nameEn, cx, optY, btnSize * 0.35, shapeColor);
+                ctx.font = `${btnSize * 0.55}px ${F}`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(shape.emoji, cx, optY);
 
                 this.optionAreas[i] = {
                     x: cx - btnSize * 0.6, y: optY - btnSize * 0.6,
