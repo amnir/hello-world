@@ -221,6 +221,61 @@
             z-index: 100;
         }
         .toast.show { opacity: 1; }
+
+        .master-prompt {
+            max-width: 1400px;
+            margin: 0 auto 24px;
+            background: #161b22;
+            border: 1px solid #f1c40f44;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .master-prompt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 20px;
+            background: #1c1f26;
+            border-bottom: 1px solid #f1c40f44;
+        }
+        .master-prompt-header h2 {
+            font-size: 16px;
+            color: #f1c40f;
+        }
+        .master-prompt-header button {
+            font-size: 13px;
+            padding: 6px 16px;
+            border-radius: 6px;
+            border: 1px solid #f1c40f66;
+            background: #f1c40f22;
+            color: #f1c40f;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .master-prompt-header button:hover { background: #f1c40f33; }
+        .master-prompt-body {
+            padding: 16px 20px;
+        }
+        .master-prompt-body .step {
+            margin-bottom: 14px;
+        }
+        .master-prompt-body .step-label {
+            font-size: 12px;
+            color: #8b949e;
+            margin-bottom: 4px;
+        }
+        .master-prompt-body .step-label strong {
+            color: #f0f6fc;
+        }
+        .master-prompt-body .prompt-box {
+            font-size: 13px;
+        }
+        .master-prompt-body .note {
+            font-size: 12px;
+            color: #6e7681;
+            margin-top: 10px;
+            line-height: 1.6;
+        }
     </style>
 </head>
 <body>
@@ -244,6 +299,46 @@
         <option value="#2ecc71">Green screen</option>
     </select>
     <button class="secondary" onclick="renderAll()">Re-render All</button>
+</div>
+
+<div class="master-prompt" id="master-prompt">
+    <div class="master-prompt-header">
+        <h2>ChatGPT / DALL-E Workflow</h2>
+        <button onclick="copyMasterPrompt()">Copy Initial Prompt</button>
+    </div>
+    <div class="master-prompt-body">
+        <div class="step">
+            <div class="step-label"><strong>Step 1:</strong> Paste this initial prompt into ChatGPT to set the style</div>
+            <div class="prompt-box" id="master-prompt-text">I need you to generate a set of character sprites for a children's educational tower defense game called "Wisdom Defenders" (שומרי החוכמה). All characters must share a consistent visual style. Here are the rules:
+
+STYLE BIBLE:
+- Target audience: Hebrew-speaking preschoolers ages 5-6
+- Art style: kawaii / cute, with rounded soft shapes, no sharp edges
+- Shading: soft cel-shading with gentle highlights, NOT flat vector and NOT realistic
+- Proportions: chibi-like, heads slightly oversized, stubby limbs
+- Colors: bright, saturated, cheerful palette
+- Expression: every character has a face with big expressive eyes (white sclera, round dark pupils with a white shine dot)
+- Mood: positive, friendly, non-scary — even the "enemies" are silly and goofy, never threatening
+- Output: each character on a transparent background, centered, front-facing, 1024×1024px
+- No text, no watermarks, no background elements
+- The game is for kids — absolutely nothing scary, violent, or inappropriate
+
+The game has 7 defenders (the player's team), 6 enemies (silly troublemakers), and 6 projectile types. I will give you each character one at a time. For each one, I will provide a detailed description and a reference image showing the current procedural/programmer-art version. Match the colors and design intent from the reference, but render it in the style described above.
+
+Ready? I'll start with the first character.</div>
+        </div>
+        <div class="step">
+            <div class="step-label"><strong>Step 2:</strong> For each character below, copy its prompt and attach its static PNG as a reference image</div>
+        </div>
+        <div class="step">
+            <div class="step-label"><strong>Step 3:</strong> After generating, ask ChatGPT to refine ("make the eyes bigger", "more rounded", etc.) until happy</div>
+        </div>
+        <div class="note">
+            Tip: Download PNGs at 512px or 1024px for best reference quality. Use transparent background.
+            For Midjourney, skip the initial prompt and append <code>--style raw --niji 6</code> to each character prompt.
+            For Stable Diffusion, use the prompt as-is with a negative prompt: <code>scary, realistic, sharp edges, text, watermark, dark, violent</code>.
+        </div>
+    </div>
 </div>
 
 <div class="batch-bar">
@@ -672,6 +767,11 @@ function renderForDownload(character) {
 
     return canvas;
 }
+
+window.copyMasterPrompt = function() {
+    const text = document.getElementById('master-prompt-text').textContent;
+    navigator.clipboard.writeText(text).then(() => showToast('Initial prompt copied!'));
+};
 
 window.downloadAllPNGs = async function() {
     // Simple sequential download (no zip library dependency)
