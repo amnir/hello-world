@@ -1,6 +1,6 @@
 // Bump version to force re-cache when files change
-const CACHE_NAME = 'wisdom-defenders-v4';
-const ASSETS = [
+const CACHE_NAME = 'wisdom-defenders-v5';
+const CORE_ASSETS = [
     './',
     './index.html',
     './css/style.css',
@@ -9,16 +9,32 @@ const ASSETS = [
     './js/levels.js',
     './js/challenges.js',
     './js/audio.js',
+    './js/assets.js',
+    './js/game-logic.js',
+    './js/tutorial.js',
     './manifest.json',
     './icons/icon.svg',
     './icons/icon-192.png',
     './icons/icon-512.png',
 ];
+const IMAGE_ASSETS = [
+    './assets/defenders/number-buddy.png',
+    './assets/defenders/letter-lion.png',
+    './assets/defenders/color-flower.png',
+    './assets/defenders/shape-shield.png',
+    './assets/defenders/star-maker.png',
+    './assets/defenders/pattern-peacock.png',
+    './assets/defenders/music-bird.png',
+];
 
-// Install: cache all assets
+// Install: cache core assets (required), then best-effort cache images
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+        caches.open(CACHE_NAME).then((cache) =>
+            cache.addAll(CORE_ASSETS).then(() =>
+                Promise.allSettled(IMAGE_ASSETS.map((url) => cache.add(url)))
+            )
+        )
     );
     self.skipWaiting();
 });

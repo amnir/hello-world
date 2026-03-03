@@ -6,6 +6,24 @@
 //   time = elapsed time in seconds (for animations)
 // =============================================================================
 
+import { getDefenderImage } from './assets.js';
+
+function withImage(typeName, proceduralFn, transformFn) {
+    return (ctx, x, y, size, time) => {
+        const img = getDefenderImage(typeName);
+        if (!img) return proceduralFn(ctx, x, y, size, time);
+        ctx.save();
+        try {
+            ctx.translate(x, y);
+            if (transformFn) transformFn(ctx, time);
+            const s = size * 2.8;
+            ctx.drawImage(img, -s / 2, -s / 2, s, s);
+        } finally {
+            ctx.restore();
+        }
+    };
+}
+
 // ─── Helper Functions ────────────────────────────────────────────────────────
 
 function drawEye(ctx, x, y, r, pupilOffX = 0, pupilOffY = 0) {
@@ -1588,13 +1606,13 @@ export function drawSticker(ctx, x, y, size, type, earned = true) {
 // ─── Sprite Map for easy lookup ──────────────────────────────────────────────
 
 export const DEFENDER_SPRITES = {
-    numberBuddy: drawNumberBuddy,
-    letterLion: drawLetterLion,
-    colorFlower: drawColorFlower,
-    shapeShield: drawShapeShield,
-    starMaker: drawStarMaker,
-    patternPeacock: drawPatternPeacock,
-    musicBird: drawMusicBird,
+    numberBuddy:    withImage('numberBuddy', drawNumberBuddy, (ctx, t) => ctx.translate(0, Math.sin(t * 2) * 2)),
+    letterLion:     withImage('letterLion', drawLetterLion, (ctx, t) => ctx.translate(0, Math.sin(t * 1.8) * 2)),
+    colorFlower:    withImage('colorFlower', drawColorFlower, (ctx, t) => ctx.translate(Math.sin(t * 1.5) * 1.5, 0)),
+    shapeShield:    withImage('shapeShield', drawShapeShield, (ctx, t) => ctx.scale(1 + Math.sin(t * 2) * 0.03, 1 + Math.sin(t * 2) * 0.03)),
+    starMaker:      withImage('starMaker', drawStarMaker, (ctx, t) => ctx.rotate(Math.sin(t * 1.5) * 0.1)),
+    patternPeacock: withImage('patternPeacock', drawPatternPeacock, (ctx, t) => ctx.translate(0, Math.sin(t * 2) * 1.5)),
+    musicBird:      withImage('musicBird', drawMusicBird, (ctx, t) => ctx.translate(0, Math.sin(t * 3) * 2)),
 };
 
 export const ENEMY_SPRITES = {

@@ -47,7 +47,7 @@ Seven JS modules, all interconnected via ES6 imports:
 
 ## Key Design Decisions
 
-- **No external assets:** All graphics are procedural canvas drawing, all audio is synthesized. This makes the project fully self-contained.
+- **Procedural-first with optional image assets:** Defenders have AI-generated PNG sprites (`assets/defenders/`) loaded via `js/assets.js`, with automatic fallback to procedural canvas drawing if images fail. Enemy sprites and all audio remain fully procedural/synthesized.
 - **RTL layout:** Enemies approach from the left, defenders protect the house on the right. Hebrew text and UI follow RTL conventions.
 - **Grid-based:** 3 rows × 6 columns for defender placement.
 - **Kid-safe:** Positive reinforcement (stars for all attempts), no scary content, large touch targets (48×48px min).

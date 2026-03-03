@@ -17,6 +17,7 @@ import {
     getSfxEnabled, getMusicEnabled, getSpeechEnabled,
 } from './audio.js';
 
+import { loadDefenderImages } from './assets.js';
 import { DEFENDER_DEFS, ENEMY_DEFS, LEVELS } from './levels.js';
 import { generateChallenge } from './challenges.js';
 import { Tutorial } from './tutorial.js';
@@ -1672,7 +1673,7 @@ class Game {
             ctx.beginPath();
             ctx.ellipse(dx, defBaseY + 26, 22, 6, 0, 0, Math.PI * 2);
             ctx.fill();
-            DEFENDER_SPRITES[defenderNames[i]](ctx, dx, dy, 48, this.time);
+            DEFENDER_SPRITES[defenderNames[i]](ctx, dx, dy, 64, this.time);
         }
 
         // ── Overhanging Corner Branches (foreground) ──
@@ -3358,4 +3359,36 @@ const canvas = document.getElementById('game-canvas');
 resizeCanvas(canvas);
 window.addEventListener('resize', () => resizeCanvas(canvas));
 
-const game = new Game(canvas);
+function drawLoadingScreen(progress) {
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    ctx.fillStyle = '#87CEEB';
+    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+    ctx.fillStyle = '#2c3e50';
+    ctx.font = 'bold 36px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('שומרי החוכמה', CANVAS_W / 2, CANVAS_H / 2 - 40);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '18px Arial';
+    ctx.fillText('...טוען', CANVAS_W / 2, CANVAS_H / 2);
+
+    const barW = 200, barH = 16;
+    const barX = (CANVAS_W - barW) / 2, barY = CANVAS_H / 2 + 20;
+    ctx.fillStyle = '#bdc3c7';
+    ctx.fillRect(barX, barY, barW, barH);
+    ctx.fillStyle = '#27ae60';
+    ctx.fillRect(barX, barY, barW * progress, barH);
+
+    ctx.restore();
+}
+
+drawLoadingScreen(0);
+loadDefenderImages((loaded, total) => drawLoadingScreen(loaded / total))
+    .catch((err) => console.warn('Image preload failed, using procedural sprites:', err))
+    .then(() => new Game(canvas))
+    .catch((err) => console.error('Fatal: Game failed to initialize', err));
