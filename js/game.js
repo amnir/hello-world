@@ -335,7 +335,7 @@ class Game {
         // Play button area (centered below stone sign)
         const btnW = 200, btnH = 60;
         const btnX = CANVAS_W / 2 - btnW / 2;
-        const btnY = 230;
+        const btnY = 250;
         if (pos.x >= btnX && pos.x <= btnX + btnW && pos.y >= btnY && pos.y <= btnY + btnH) {
             playClick();
             this.state = STATE.LEVEL_SELECT;
@@ -1187,10 +1187,32 @@ class Game {
 
         // ── Sky Background ──
         const skyGrad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
-        skyGrad.addColorStop(0, '#87CEEB');
-        skyGrad.addColorStop(0.6, '#b8e6f0');
-        skyGrad.addColorStop(1, '#a8d8a8');
+        skyGrad.addColorStop(0, '#5b9bd5');
+        skyGrad.addColorStop(0.35, '#7ec8e3');
+        skyGrad.addColorStop(0.7, '#6dbd8a');
+        skyGrad.addColorStop(1, '#3a7d44');
         ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+        // Radial vignette overlay (darken edges)
+        const vignette = ctx.createRadialGradient(
+            CANVAS_W / 2, CANVAS_H / 2, CANVAS_H * 0.3,
+            CANVAS_W / 2, CANVAS_H / 2, CANVAS_W * 0.75
+        );
+        vignette.addColorStop(0, 'rgba(0,0,0,0)');
+        vignette.addColorStop(1, 'rgba(0,0,0,0.25)');
+        ctx.fillStyle = vignette;
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+        // Warm ambient glow behind sign area (stronger)
+        const ambientGlow = ctx.createRadialGradient(
+            CANVAS_W / 2, 120, 20,
+            CANVAS_W / 2, 120, 320
+        );
+        ambientGlow.addColorStop(0, 'rgba(255,240,200,0.4)');
+        ambientGlow.addColorStop(0.4, 'rgba(255,220,150,0.15)');
+        ambientGlow.addColorStop(1, 'rgba(255,200,100,0)');
+        ctx.fillStyle = ambientGlow;
         ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
         // ── Pulsing Sun with Rotating Rays ──
@@ -1237,87 +1259,144 @@ class Game {
         ctx.fill();
 
         // ── Drifting Clouds ──
+        // Distant background clouds (low opacity)
+        const distantClouds = [
+            { baseX: 100, y: 90, size: 50, speed: 5 },
+            { baseX: 400, y: 110, size: 45, speed: 4 },
+            { baseX: 750, y: 95, size: 55, speed: 6 },
+        ];
+        ctx.save();
+        ctx.globalAlpha = 0.3;
+        for (const c of distantClouds) {
+            const cx = (c.baseX + this.time * c.speed) % (CANVAS_W + 200) - 100;
+            this.drawCloud(ctx, cx, c.y, c.size);
+        }
+        ctx.restore();
+
+        // Regular clouds (8 total)
         const clouds = [
             { baseX: 0, y: 55, size: 40, speed: 18 },
             { baseX: 200, y: 35, size: 32, speed: 12 },
             { baseX: 450, y: 70, size: 38, speed: 15 },
             { baseX: 650, y: 25, size: 28, speed: 10 },
             { baseX: 850, y: 60, size: 34, speed: 20 },
+            { baseX: 130, y: 45, size: 30, speed: 14 },
+            { baseX: 550, y: 40, size: 36, speed: 16 },
+            { baseX: 780, y: 75, size: 32, speed: 11 },
         ];
         for (const c of clouds) {
             const cx = (c.baseX + this.time * c.speed) % (CANVAS_W + 200) - 100;
             this.drawCloud(ctx, cx, c.y, c.size);
         }
 
-        // ── Floating Sparkle Stars ──
+        // ── Floating Sparkle Stars (25 sky sparkles, 3 size categories) ──
         const sparkles = [
-            { x: 180, y: 30, phase: 0, speed: 3.0 },
-            { x: 320, y: 55, phase: 1.2, speed: 2.5 },
-            { x: 500, y: 20, phase: 2.5, speed: 3.5 },
-            { x: 620, y: 65, phase: 0.8, speed: 2.8 },
-            { x: 750, y: 35, phase: 3.8, speed: 3.2 },
-            { x: 870, y: 50, phase: 1.5, speed: 2.2 },
-            { x: 410, y: 80, phase: 4.2, speed: 2.9 },
-            { x: 560, y: 45, phase: 5.0, speed: 3.3 },
-            { x: 240, y: 90, phase: 2.0, speed: 2.6 },
-            { x: 700, y: 15, phase: 3.2, speed: 3.1 },
+            // Small sparkles
+            { x: 180, y: 30, phase: 0, speed: 3.0, cat: 0 },
+            { x: 320, y: 55, phase: 1.2, speed: 2.5, cat: 0 },
+            { x: 620, y: 65, phase: 0.8, speed: 2.8, cat: 0 },
+            { x: 870, y: 50, phase: 1.5, speed: 2.2, cat: 0 },
+            { x: 240, y: 90, phase: 2.0, speed: 2.6, cat: 0 },
+            { x: 50, y: 40, phase: 4.5, speed: 3.4, cat: 0 },
+            { x: 930, y: 30, phase: 0.3, speed: 2.9, cat: 0 },
+            { x: 140, y: 70, phase: 5.5, speed: 2.3, cat: 0 },
+            { x: 820, y: 85, phase: 1.8, speed: 3.0, cat: 0 },
+            // Medium sparkles
+            { x: 500, y: 20, phase: 2.5, speed: 3.5, cat: 1 },
+            { x: 750, y: 35, phase: 3.8, speed: 3.2, cat: 1 },
+            { x: 410, y: 80, phase: 4.2, speed: 2.9, cat: 1 },
+            { x: 560, y: 45, phase: 5.0, speed: 3.3, cat: 1 },
+            { x: 700, y: 15, phase: 3.2, speed: 3.1, cat: 1 },
+            { x: 340, y: 100, phase: 0.6, speed: 2.7, cat: 1 },
+            { x: 90, y: 55, phase: 3.9, speed: 3.1, cat: 1 },
+            { x: 660, y: 95, phase: 2.2, speed: 2.4, cat: 1 },
+            { x: 470, y: 110, phase: 1.0, speed: 2.8, cat: 1 },
+            // Large sparkles
+            { x: 280, y: 25, phase: 1.7, speed: 2.0, cat: 2 },
+            { x: 580, y: 60, phase: 3.5, speed: 1.8, cat: 2 },
+            { x: 800, y: 40, phase: 4.8, speed: 2.1, cat: 2 },
+            { x: 160, y: 85, phase: 0.4, speed: 1.9, cat: 2 },
+            { x: 720, y: 75, phase: 2.8, speed: 2.2, cat: 2 },
+            { x: 440, y: 35, phase: 5.2, speed: 2.0, cat: 2 },
+            { x: 900, y: 65, phase: 1.3, speed: 2.3, cat: 2 },
         ];
+        const sizeCats = [2.5, 4, 6];
         for (const s of sparkles) {
             const alpha = 0.3 + Math.sin(this.time * s.speed + s.phase) * 0.35 + 0.35;
-            const sz = 3 + Math.sin(this.time * s.speed + s.phase) * 1.5;
-            ctx.save();
-            ctx.globalAlpha = alpha;
-            ctx.fillStyle = '#fff';
-            ctx.beginPath();
-            ctx.moveTo(s.x, s.y - sz);
-            ctx.lineTo(s.x + sz * 0.3, s.y - sz * 0.3);
-            ctx.lineTo(s.x + sz, s.y);
-            ctx.lineTo(s.x + sz * 0.3, s.y + sz * 0.3);
-            ctx.lineTo(s.x, s.y + sz);
-            ctx.lineTo(s.x - sz * 0.3, s.y + sz * 0.3);
-            ctx.lineTo(s.x - sz, s.y);
-            ctx.lineTo(s.x - sz * 0.3, s.y - sz * 0.3);
-            ctx.closePath();
-            ctx.fill();
-            ctx.restore();
+            const baseSz = sizeCats[s.cat];
+            const sz = baseSz + Math.sin(this.time * s.speed + s.phase) * (baseSz * 0.4);
+            this.drawSparkle(ctx, s.x, s.y, sz, '#fff', alpha);
         }
 
-        // ── Stone Sign ──
-        const signW = 400, signH = 160;
+        // ── God Rays behind sign ──
+        const raysCenterX = CANVAS_W / 2;
+        const raysCenterY = 120;
+        // Bright glow circle behind sign (stronger)
+        const godGlow = ctx.createRadialGradient(raysCenterX, raysCenterY, 10, raysCenterX, raysCenterY, 250);
+        godGlow.addColorStop(0, 'rgba(255,250,220,0.5)');
+        godGlow.addColorStop(0.3, 'rgba(255,240,180,0.2)');
+        godGlow.addColorStop(0.7, 'rgba(255,230,150,0.06)');
+        godGlow.addColorStop(1, 'rgba(255,230,150,0)');
+        ctx.fillStyle = godGlow;
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+        // Triangular light beams (stronger, wider)
+        ctx.save();
+        for (let r = 0; r < 14; r++) {
+            const angle = (r * Math.PI * 2) / 14 + this.time * 0.08;
+            const rayAlpha = 0.07 + Math.sin(this.time * 1.2 + r * 1.5) * 0.04;
+            ctx.fillStyle = `rgba(255,248,220,${rayAlpha})`;
+            ctx.beginPath();
+            ctx.moveTo(raysCenterX, raysCenterY);
+            ctx.lineTo(
+                raysCenterX + Math.cos(angle - 0.12) * 450,
+                raysCenterY + Math.sin(angle - 0.12) * 450
+            );
+            ctx.lineTo(
+                raysCenterX + Math.cos(angle + 0.12) * 450,
+                raysCenterY + Math.sin(angle + 0.12) * 450
+            );
+            ctx.closePath();
+            ctx.fill();
+        }
+        ctx.restore();
+
+        // ── Stone Sign (enlarged) ──
+        const signW = 540, signH = 200;
         const signX = CANVAS_W / 2 - signW / 2;
-        const signY = 30;
+        const signY = 15;
 
         ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,0.3)';
-        ctx.shadowBlur = 15;
-        ctx.shadowOffsetY = 5;
+        ctx.shadowColor = 'rgba(0,0,0,0.4)';
+        ctx.shadowBlur = 25;
+        ctx.shadowOffsetY = 8;
         const stoneGrad = ctx.createLinearGradient(signX, signY, signX, signY + signH);
         stoneGrad.addColorStop(0, '#d4cbbf');
         stoneGrad.addColorStop(0.3, '#c2b8a8');
         stoneGrad.addColorStop(0.7, '#b0a590');
         stoneGrad.addColorStop(1, '#9a8e78');
         ctx.fillStyle = stoneGrad;
-        this.roundRect(ctx, signX, signY, signW, signH, 20);
+        this.drawSignShape(ctx, signX, signY, signW, signH);
         ctx.fill();
         ctx.restore();
 
         // Stone border
         ctx.strokeStyle = '#7a6e5e';
         ctx.lineWidth = 3;
-        this.roundRect(ctx, signX, signY, signW, signH, 20);
+        this.drawSignShape(ctx, signX, signY, signW, signH);
         ctx.stroke();
 
         // Inner bevel highlight
         ctx.strokeStyle = 'rgba(255,255,255,0.22)';
         ctx.lineWidth = 2;
-        this.roundRect(ctx, signX + 5, signY + 4, signW - 10, signH - 8, 16);
+        this.drawSignShape(ctx, signX + 6, signY + 5, signW - 12, signH - 10);
         ctx.stroke();
 
         // Stone texture spots
         ctx.save();
-        this.roundRect(ctx, signX, signY, signW, signH, 20);
+        this.drawSignShape(ctx, signX, signY, signW, signH);
         ctx.clip();
-        for (let i = 0; i < 30; i++) {
+        for (let i = 0; i < 45; i++) {
             const tx = signX + 15 + ((i * 43 + 7) % (signW - 30));
             const ty = signY + 12 + ((i * 31 + 11) % (signH - 24));
             ctx.fillStyle = `rgba(0,0,0,${0.025 + (i % 4) * 0.012})`;
@@ -1325,56 +1404,75 @@ class Game {
             ctx.arc(tx, ty, 2 + (i % 3) * 1.2, 0, Math.PI * 2);
             ctx.fill();
         }
+
+        // Stone crack lines
+        ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(signX + 60, signY + 30);
+        ctx.lineTo(signX + 80, signY + 70);
+        ctx.lineTo(signX + 75, signY + 110);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(signX + signW - 70, signY + 50);
+        ctx.lineTo(signX + signW - 85, signY + 90);
+        ctx.lineTo(signX + signW - 60, signY + 140);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(signX + signW / 2 - 40, signY + signH - 20);
+        ctx.lineTo(signX + signW / 2 - 20, signY + signH - 50);
+        ctx.stroke();
         ctx.restore();
 
-        // ── Green Vines on Sign ──
-        this.drawMenuVine(ctx, signX + 15, signY + 5, -1);
-        this.drawMenuVine(ctx, signX + signW - 15, signY + 5, 1);
+        // Moss on top edge of sign
+        for (let i = 0; i < 18; i++) {
+            const mx = signX + 30 + i * (signW - 60) / 17;
+            const my = signY + 2 + Math.sin(i * 2.3) * 3;
+            const mr = 5 + (i * 7 % 4);
+            ctx.fillStyle = `rgba(46,${160 + (i % 3) * 20},60,${0.5 + (i % 3) * 0.15})`;
+            ctx.beginPath();
+            ctx.ellipse(mx, my, mr, mr * 0.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
 
-        // ── Title Text on Sign ──
+        // ── Golden sparkles around sign edges ──
+        const signSparkles = [
+            { x: signX + 20, y: signY + 20, phase: 0.5, speed: 2.5 },
+            { x: signX + signW - 20, y: signY + 25, phase: 1.8, speed: 2.8 },
+            { x: signX + 40, y: signY + signH - 10, phase: 3.2, speed: 2.2 },
+            { x: signX + signW - 40, y: signY + signH - 15, phase: 4.5, speed: 2.6 },
+            { x: signX + signW / 2 - 60, y: signY + 8, phase: 2.0, speed: 3.0 },
+            { x: signX + signW / 2 + 60, y: signY + 12, phase: 0.8, speed: 2.4 },
+            { x: signX + 10, y: signY + signH / 2, phase: 5.0, speed: 2.7 },
+            { x: signX + signW - 10, y: signY + signH / 2 + 10, phase: 3.8, speed: 2.3 },
+            { x: signX + signW / 2, y: signY + signH + 5, phase: 1.2, speed: 2.9 },
+            { x: signX + signW / 2 - 100, y: signY + signH - 5, phase: 4.0, speed: 2.1 },
+        ];
+        for (const s of signSparkles) {
+            const alpha = 0.3 + Math.sin(this.time * s.speed + s.phase) * 0.35 + 0.35;
+            const sz = 3 + Math.sin(this.time * s.speed + s.phase) * 1.5;
+            this.drawSparkle(ctx, s.x, s.y, sz, '#ffd700', alpha);
+        }
+
+        // ── Green Vines on Sign (4 vines) ──
+        this.drawMenuVine(ctx, signX + 15, signY + 5, -1, true);
+        this.drawMenuVine(ctx, signX + signW - 15, signY + 5, 1, true);
+        this.drawMenuVine(ctx, signX + signW / 2 - 80, signY + signH - 5, -1, false);
+        this.drawMenuVine(ctx, signX + signW / 2 + 80, signY + signH - 5, 1, false);
+
+        // ── Title Text on Sign (4-layer rendering) ──
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.font = `bold 50px ${F}`;
-
-        // "שומרי" in blue
-        const titleY1 = signY + 58;
-        ctx.fillStyle = 'rgba(0,0,0,0.15)';
-        ctx.fillText('שומרי', CANVAS_W / 2 + 2, titleY1 + 3);
-        ctx.strokeStyle = '#1a3a5c';
-        ctx.lineWidth = 5;
-        ctx.lineJoin = 'round';
-        ctx.strokeText('שומרי', CANVAS_W / 2, titleY1);
-        const blueGrad = ctx.createLinearGradient(
-            CANVAS_W / 2 - 80, titleY1 - 20,
-            CANVAS_W / 2 + 80, titleY1 + 20
-        );
-        blueGrad.addColorStop(0, '#2471a3');
-        blueGrad.addColorStop(0.5, '#2e86c1');
-        blueGrad.addColorStop(1, '#2471a3');
-        ctx.fillStyle = blueGrad;
-        ctx.fillText('שומרי', CANVAS_W / 2, titleY1);
-
-        // "החוכמה" in orange
-        const titleY2 = signY + 112;
-        ctx.fillStyle = 'rgba(0,0,0,0.15)';
-        ctx.fillText('החוכמה', CANVAS_W / 2 + 2, titleY2 + 3);
-        ctx.strokeStyle = '#8b4513';
-        ctx.lineWidth = 5;
-        ctx.strokeText('החוכמה', CANVAS_W / 2, titleY2);
-        const orangeGrad = ctx.createLinearGradient(
-            CANVAS_W / 2 - 80, titleY2 - 20,
-            CANVAS_W / 2 + 80, titleY2 + 20
-        );
-        orangeGrad.addColorStop(0, '#e67e22');
-        orangeGrad.addColorStop(0.5, '#f39c12');
-        orangeGrad.addColorStop(1, '#e67e22');
-        ctx.fillStyle = orangeGrad;
-        ctx.fillText('החוכמה', CANVAS_W / 2, titleY2);
+        ctx.font = `bold 64px ${F}`;
+        this.drawGlossyTitle(ctx, 'שומרי', CANVAS_W / 2, signY + 72,
+            '#0d2137', ['#1a5276', '#2e86c1', '#5dade2', '#2e86c1', '#1a5276'], 0.2);
+        this.drawGlossyTitle(ctx, 'החוכמה', CANVAS_W / 2, signY + 143,
+            '#5a2d00', ['#c0392b', '#e67e22', '#f5b041', '#e67e22', '#c0392b'], 0.18);
 
         // ── Play Button with Pulsing Glow ──
         const btnW = 200, btnH = 60;
         const btnX = CANVAS_W / 2 - btnW / 2;
-        const btnY = 230;
+        const btnY = 250;
         const glowIntensity = 8 + Math.sin(this.time * 3) * 6;
         ctx.save();
         ctx.shadowColor = 'rgba(46, 204, 113, 0.6)';
@@ -1389,31 +1487,79 @@ class Game {
         ctx.textBaseline = 'middle';
         this.drawOutlinedText(ctx, '\u200Fבואו נשחק!', CANVAS_W / 2, btnY + btnH / 2, '#fff', '#1a7a42', 3);
 
-        // ── Background Trees/Bushes ──
+        // ── Large Forest Wall Trees (screen edges, tall and dense) ──
+        const forestWall = [
+            // Left edge — tall layered trees
+            { x: -30, cy: 250, r: 80 },
+            { x: 15, cy: 280, r: 70 },
+            { x: 50, cy: 310, r: 60 },
+            { x: -10, cy: 340, r: 55 },
+            // Right edge — tall layered trees
+            { x: 960, cy: 255, r: 75 },
+            { x: 920, cy: 285, r: 65 },
+            { x: 890, cy: 315, r: 55 },
+            { x: 950, cy: 340, r: 50 },
+        ];
+        for (const t of forestWall) {
+            // Trunk (tall)
+            ctx.fillStyle = '#4a3520';
+            ctx.fillRect(t.x - 9, t.cy + t.r * 0.4, 18, 120);
+            // Back canopy
+            ctx.fillStyle = '#0e4d2a';
+            ctx.beginPath();
+            ctx.arc(t.x, t.cy, t.r + 8, 0, Math.PI * 2);
+            ctx.fill();
+            // Multi-circle canopy
+            ctx.fillStyle = '#145a32';
+            ctx.beginPath();
+            ctx.arc(t.x - t.r * 0.35, t.cy - 5, t.r * 0.75, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(t.x + t.r * 0.3, t.cy + 5, t.r * 0.7, 0, Math.PI * 2);
+            ctx.fill();
+            // Main canopy
+            ctx.fillStyle = '#196f3d';
+            ctx.beginPath();
+            ctx.arc(t.x, t.cy - 8, t.r * 0.85, 0, Math.PI * 2);
+            ctx.fill();
+            // Highlight
+            ctx.fillStyle = 'rgba(30,134,73,0.35)';
+            ctx.beginPath();
+            ctx.arc(t.x - t.r * 0.2, t.cy - t.r * 0.35, t.r * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // ── Background Trees/Bushes (multi-circle canopies, moved up) ──
         const treeSets = [
-            { x: 55,  cy: 370, r: 38 },
-            { x: 145, cy: 360, r: 45 },
-            { x: 270, cy: 372, r: 35 },
-            { x: 380, cy: 365, r: 42 },
-            { x: 490, cy: 370, r: 38 },
-            { x: 590, cy: 358, r: 48 },
-            { x: 700, cy: 372, r: 36 },
-            { x: 800, cy: 363, r: 44 },
-            { x: 905, cy: 370, r: 40 },
+            { x: 55,  cy: 350, r: 42 },
+            { x: 145, cy: 340, r: 48 },
+            { x: 270, cy: 352, r: 40 },
+            { x: 380, cy: 345, r: 45 },
+            { x: 490, cy: 350, r: 42 },
+            { x: 590, cy: 338, r: 52 },
+            { x: 700, cy: 352, r: 40 },
+            { x: 800, cy: 343, r: 48 },
+            { x: 905, cy: 350, r: 44 },
         ];
         for (const t of treeSets) {
             // Trunk
             ctx.fillStyle = '#6b4f2e';
             ctx.fillRect(t.x - 5, t.cy, 10, 50);
-            // Darker back canopy
+            // Darker back canopy (main)
             ctx.fillStyle = '#1e8449';
             ctx.beginPath();
             ctx.arc(t.x, t.cy, t.r + 4, 0, Math.PI * 2);
             ctx.fill();
-            // Main canopy
+            // Multi-circle canopy for fuller look
             ctx.fillStyle = '#27ae60';
             ctx.beginPath();
             ctx.arc(t.x, t.cy - 3, t.r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(t.x - t.r * 0.45, t.cy + 2, t.r * 0.65, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(t.x + t.r * 0.4, t.cy + 4, t.r * 0.6, 0, Math.PI * 2);
             ctx.fill();
             // Highlight
             ctx.fillStyle = 'rgba(46, 204, 113, 0.45)';
@@ -1422,9 +1568,39 @@ class Game {
             ctx.fill();
         }
 
-        // ── Rolling Green Hills ──
+        // ── Mid-level bushes/shrubs (fill gap between trees and hills) ──
+        const bushes = [
+            { x: 30, y: 400, r: 22 },
+            { x: 100, y: 395, r: 18 },
+            { x: 180, y: 402, r: 20 },
+            { x: 260, y: 398, r: 17 },
+            { x: 350, y: 405, r: 19 },
+            { x: 430, y: 397, r: 21 },
+            { x: 520, y: 403, r: 18 },
+            { x: 610, y: 396, r: 20 },
+            { x: 700, y: 404, r: 17 },
+            { x: 780, y: 398, r: 22 },
+            { x: 860, y: 401, r: 19 },
+            { x: 935, y: 397, r: 20 },
+        ];
+        for (const b of bushes) {
+            ctx.fillStyle = '#1a7a3a';
+            ctx.beginPath();
+            ctx.ellipse(b.x, b.y, b.r + 3, b.r * 0.7, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#22994a';
+            ctx.beginPath();
+            ctx.ellipse(b.x + 2, b.y - 2, b.r, b.r * 0.6, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(46,204,113,0.3)';
+            ctx.beginPath();
+            ctx.ellipse(b.x - b.r * 0.2, b.y - b.r * 0.3, b.r * 0.4, b.r * 0.25, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // ── Rolling Green Hills (deeper colors) ──
         // Back hill (darkest)
-        ctx.fillStyle = '#1e8449';
+        ctx.fillStyle = '#145a32';
         ctx.beginPath();
         ctx.moveTo(0, CANVAS_H);
         for (let x = 0; x <= CANVAS_W; x += 4) {
@@ -1435,7 +1611,7 @@ class Game {
         ctx.fill();
 
         // Middle hill
-        ctx.fillStyle = '#27ae60';
+        ctx.fillStyle = '#1e8449';
         ctx.beginPath();
         ctx.moveTo(0, CANVAS_H);
         for (let x = 0; x <= CANVAS_W; x += 4) {
@@ -1446,7 +1622,7 @@ class Game {
         ctx.fill();
 
         // Front hill (brightest)
-        ctx.fillStyle = '#2ecc71';
+        ctx.fillStyle = '#27ae60';
         ctx.beginPath();
         ctx.moveTo(0, CANVAS_H);
         for (let x = 0; x <= CANVAS_W; x += 4) {
@@ -1480,19 +1656,28 @@ class Game {
             ctx.fill();
         }
 
-        // ── All 7 Defenders ──
+        // ── All 7 Defenders (larger with shadows) ──
         const defenderNames = [
             'starMaker', 'numberBuddy', 'letterLion', 'colorFlower',
             'shapeShield', 'patternPeacock', 'musicBird'
         ];
         const defStartX = 100;
         const defSpacing = (CANVAS_W - 200) / (defenderNames.length - 1);
-        const defBaseY = 430;
+        const defBaseY = 425;
         for (let i = 0; i < defenderNames.length; i++) {
             const dx = defStartX + i * defSpacing;
-            const dy = defBaseY + Math.sin(this.time * 2 + i * 0.9) * 6;
-            DEFENDER_SPRITES[defenderNames[i]](ctx, dx, dy, 34, this.time);
+            const dy = defBaseY + Math.sin(this.time * 2 + i * 0.9) * 3;
+            // Elliptical ground shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.15)';
+            ctx.beginPath();
+            ctx.ellipse(dx, defBaseY + 26, 22, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+            DEFENDER_SPRITES[defenderNames[i]](ctx, dx, dy, 48, this.time);
         }
+
+        // ── Overhanging Corner Branches (foreground) ──
+        this.drawOverhangingBranch(ctx, -10, -10, 1, this.time);
+        this.drawOverhangingBranch(ctx, CANVAS_W + 10, -10, -1, this.time);
     }
 
     // ─── Level Select ───────────────────────────────────────────────────
@@ -2778,88 +2963,162 @@ class Game {
 
     // ─── Helpers ────────────────────────────────────────────────────────
 
-    /** Draw a decorative vine with leaves for the menu stone sign */
-    drawMenuVine(ctx, startX, startY, dir) {
+    /** Draw a decorative vine with leaves and flower buds for the menu stone sign */
+    drawMenuVine(ctx, startX, startY, dir, primary = true) {
         ctx.save();
-        // Main vine stem
-        ctx.strokeStyle = '#27ae60';
-        ctx.lineWidth = 3;
+        const len = primary ? 130 : 75;
+        // Single smooth bezier curve — gentle outward arc
+        const cp1x = startX + dir * (primary ? 35 : 20);
+        const cp1y = startY + len * 0.35;
+        const cp2x = startX + dir * (primary ? 15 : 8);
+        const cp2y = startY + len * 0.7;
+        const endX = startX + dir * (primary ? 30 : 18);
+        const endY = startY + len;
+
+        // Draw the main stem
+        ctx.strokeStyle = '#1a7a3a';
+        ctx.lineWidth = primary ? 4 : 2.5;
         ctx.lineCap = 'round';
         ctx.beginPath();
         ctx.moveTo(startX, startY);
-        const cp1x = startX + dir * 30;
-        const cp1y = startY + 40;
-        const cp2x = startX + dir * 12;
-        const cp2y = startY + 80;
-        const endX = startX + dir * 35;
-        const endY = startY + 110;
         ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY);
         ctx.stroke();
-
-        // Small branch
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        const bx = startX + dir * 22;
-        const by = startY + 50;
-        ctx.moveTo(bx, by);
-        ctx.quadraticCurveTo(bx + dir * 18, by - 5, bx + dir * 22, by + 8);
+        // Lighter highlight
+        ctx.strokeStyle = 'rgba(46,204,113,0.35)';
+        ctx.lineWidth = primary ? 2 : 1.5;
         ctx.stroke();
 
-        // Leaves along the vine
-        const leaves = [
-            { t: 0.15, angle: dir * -0.6, sz: 1.0 },
-            { t: 0.35, angle: dir * 0.7, sz: 1.2 },
-            { t: 0.55, angle: dir * -0.5, sz: 1.0 },
-            { t: 0.75, angle: dir * 0.6, sz: 0.9 },
-            { t: 0.9, angle: dir * -0.3, sz: 0.8 },
-        ];
-        for (const lp of leaves) {
-            const t = lp.t;
+        // Small sub-branch from midpoint
+        const bmid = 0.4;
+        const bmt = 1 - bmid;
+        const bx = bmt*bmt*bmt*startX + 3*bmt*bmt*bmid*cp1x + 3*bmt*bmid*bmid*cp2x + bmid*bmid*bmid*endX;
+        const by = bmt*bmt*bmt*startY + 3*bmt*bmt*bmid*cp1y + 3*bmt*bmid*bmid*cp2y + bmid*bmid*bmid*endY;
+        ctx.strokeStyle = '#1a7a3a';
+        ctx.lineWidth = primary ? 2.5 : 1.5;
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.quadraticCurveTo(bx + dir * 18, by + 8, bx + dir * 24, by + 22);
+        ctx.stroke();
+
+        // Leaves along the bezier curve
+        const leafCount = primary ? 8 : 5;
+        for (let i = 0; i < leafCount; i++) {
+            const t = (i + 1) / (leafCount + 1);
             const mt = 1 - t;
-            // Cubic bezier point
-            const lx = mt * mt * mt * startX + 3 * mt * mt * t * cp1x
-                + 3 * mt * t * t * cp2x + t * t * t * endX;
-            const ly = mt * mt * mt * startY + 3 * mt * mt * t * cp1y
-                + 3 * mt * t * t * cp2y + t * t * t * endY;
+            // Point on cubic bezier
+            const lx = mt*mt*mt*startX + 3*mt*mt*t*cp1x + 3*mt*t*t*cp2x + t*t*t*endX;
+            const ly = mt*mt*mt*startY + 3*mt*mt*t*cp1y + 3*mt*t*t*cp2y + t*t*t*endY;
+            const angle = dir * (i % 2 === 0 ? -0.5 : 0.5);
+            const sz = 1.0 + (i % 3) * 0.12;
+            const hasFlower = primary && (i === 2 || i === 5);
+
             ctx.save();
             ctx.translate(lx, ly);
-            ctx.rotate(lp.angle);
-            // Leaf shape
+            ctx.rotate(angle);
             ctx.fillStyle = '#2ecc71';
             ctx.beginPath();
-            ctx.ellipse(0, 0, 11 * lp.sz, 5 * lp.sz, 0, 0, Math.PI * 2);
+            ctx.ellipse(0, 0, 11 * sz, 5 * sz, 0, 0, Math.PI * 2);
             ctx.fill();
-            // Darker leaf tip
             ctx.fillStyle = '#27ae60';
             ctx.beginPath();
-            ctx.ellipse(4 * lp.sz, 0, 6 * lp.sz, 3 * lp.sz, 0, 0, Math.PI * 2);
+            ctx.ellipse(4 * sz, 0, 6 * sz, 3 * sz, 0, 0, Math.PI * 2);
             ctx.fill();
-            // Leaf vein
             ctx.strokeStyle = '#1e8449';
-            ctx.lineWidth = 0.8;
+            ctx.lineWidth = 0.7;
             ctx.beginPath();
-            ctx.moveTo(-8 * lp.sz, 0);
-            ctx.lineTo(8 * lp.sz, 0);
+            ctx.moveTo(-8 * sz, 0);
+            ctx.lineTo(8 * sz, 0);
             ctx.stroke();
+            if (hasFlower) {
+                ctx.fillStyle = '#f1c40f';
+                ctx.beginPath();
+                ctx.arc(7 * sz, -3, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#e67e22';
+                ctx.beginPath();
+                ctx.arc(7 * sz, -3, 1.2, 0, Math.PI * 2);
+                ctx.fill();
+            }
             ctx.restore();
         }
 
-        // Extra leaf on branch
+        // Leaf on sub-branch
         ctx.save();
-        ctx.translate(bx + dir * 20, by + 5);
-        ctx.rotate(dir * 0.4);
+        ctx.translate(bx + dir * 22, by + 20);
+        ctx.rotate(dir * 0.3);
         ctx.fillStyle = '#2ecc71';
         ctx.beginPath();
-        ctx.ellipse(0, 0, 10, 5, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, 10, 4.5, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = '#1e8449';
-        ctx.lineWidth = 0.8;
-        ctx.beginPath();
-        ctx.moveTo(-7, 0);
-        ctx.lineTo(7, 0);
-        ctx.stroke();
         ctx.restore();
 
+        ctx.restore();
+    }
+
+    /** Draw an overhanging branch with dense leaf clusters at screen corners */
+    drawOverhangingBranch(ctx, originX, originY, dir, time) {
+        ctx.save();
+        const sway = Math.sin(time * 0.8) * 2;
+
+        // Main branch (reuse path for dark + light strokes)
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(originX, originY);
+        ctx.bezierCurveTo(
+            originX + dir * 60, 20 + sway,
+            originX + dir * 130, 40 + sway,
+            originX + dir * 200, 100 + sway * 1.5
+        );
+        ctx.strokeStyle = '#4a3018';
+        ctx.lineWidth = 8;
+        ctx.stroke();
+        ctx.strokeStyle = '#6b4f2e';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Second branch (drooping down)
+        ctx.strokeStyle = '#4a3018';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(originX + dir * 40, 10 + sway * 0.3);
+        ctx.bezierCurveTo(
+            originX + dir * 80, 50 + sway,
+            originX + dir * 100, 80 + sway,
+            originX + dir * 130, 120 + sway * 1.2
+        );
+        ctx.stroke();
+
+        // Third thin branch
+        ctx.strokeStyle = '#5a3e1b';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(originX + dir * 100, 40 + sway * 0.6);
+        ctx.quadraticCurveTo(originX + dir * 140, 80 + sway, originX + dir * 160, 130 + sway);
+        ctx.stroke();
+
+        // Very dense leaf clusters (many overlapping)
+        const clusters = [
+            { x: originX + dir * 10, y: -5 + sway * 0.1, r: 35 },
+            { x: originX + dir * 40, y: 0 + sway * 0.2, r: 38 },
+            { x: originX + dir * 70, y: 5 + sway * 0.3, r: 35 },
+            { x: originX + dir * 25, y: 20 + sway * 0.3, r: 32 },
+            { x: originX + dir * 55, y: 25 + sway * 0.4, r: 36 },
+            { x: originX + dir * 90, y: 20 + sway * 0.5, r: 30 },
+            { x: originX + dir * 120, y: 35 + sway * 0.6, r: 34 },
+            { x: originX + dir * 45, y: 45 + sway * 0.5, r: 28 },
+            { x: originX + dir * 80, y: 50 + sway * 0.7, r: 30 },
+            { x: originX + dir * 110, y: 60 + sway * 0.8, r: 26 },
+            { x: originX + dir * 150, y: 70 + sway * 1.0, r: 28 },
+            { x: originX + dir * 65, y: 70 + sway * 0.8, r: 22 },
+            { x: originX + dir * 100, y: 85 + sway * 0.9, r: 24 },
+            { x: originX + dir * 140, y: 95 + sway * 1.1, r: 20 },
+            { x: originX + dir * 180, y: 100 + sway * 1.3, r: 22 },
+            { x: originX + dir * 130, y: 115 + sway * 1.2, r: 18 },
+            { x: originX + dir * 160, y: 125 + sway * 1.4, r: 16 },
+        ];
+        for (const cl of clusters) {
+            this.drawLeafCluster(ctx, cl.x, cl.y, cl.r, dir);
+        }
         ctx.restore();
     }
 
@@ -2970,6 +3229,87 @@ class Game {
         ctx.quadraticCurveTo(x, y + h, x, y + h - r);
         ctx.lineTo(x, y + r);
         ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+    }
+
+    /** Draw an 8-point sparkle star */
+    drawSparkle(ctx, x, y, sz, color, alpha) {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(x, y - sz);
+        ctx.lineTo(x + sz * 0.3, y - sz * 0.3);
+        ctx.lineTo(x + sz, y);
+        ctx.lineTo(x + sz * 0.3, y + sz * 0.3);
+        ctx.lineTo(x, y + sz);
+        ctx.lineTo(x - sz * 0.3, y + sz * 0.3);
+        ctx.lineTo(x - sz, y);
+        ctx.lineTo(x - sz * 0.3, y - sz * 0.3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    /** Draw 4-layer glossy title text: shadow → outline → gradient → clipped highlight */
+    drawGlossyTitle(ctx, text, x, y, outlineColor, gradColors, highlightAlpha) {
+        ctx.fillStyle = 'rgba(0,0,0,0.25)';
+        ctx.fillText(text, x + 3, y + 5);
+        ctx.strokeStyle = outlineColor;
+        ctx.lineWidth = 7;
+        ctx.lineJoin = 'round';
+        ctx.strokeText(text, x, y);
+        const grad = ctx.createLinearGradient(x - 100, y - 25, x + 100, y + 25);
+        gradColors.forEach((c, i) => grad.addColorStop(i / (gradColors.length - 1), c));
+        ctx.fillStyle = grad;
+        ctx.fillText(text, x, y);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, y - 35, CANVAS_W, 30);
+        ctx.clip();
+        ctx.fillStyle = `rgba(255,255,255,${highlightAlpha})`;
+        ctx.fillText(text, x, y);
+        ctx.restore();
+    }
+
+    /** Draw a 4-ellipse leaf cluster (used in overhanging branches) */
+    drawLeafCluster(ctx, x, y, r, dir) {
+        ctx.fillStyle = '#145a32';
+        ctx.beginPath();
+        ctx.ellipse(x, y + 4, r * 1.05, r * 0.75, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#1e8449';
+        ctx.beginPath();
+        ctx.ellipse(x, y, r, r * 0.7, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#27ae60';
+        ctx.beginPath();
+        ctx.ellipse(x + dir * 3, y - 2, r * 0.7, r * 0.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(46,204,113,0.3)';
+        ctx.beginPath();
+        ctx.ellipse(x - r * 0.15, y - r * 0.2, r * 0.35, r * 0.25, 0, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    /** Draw irregular/organic stone sign shape with bezier edges */
+    drawSignShape(ctx, x, y, w, h) {
+        const r = 18;
+        ctx.beginPath();
+        // Top edge with slight irregularities
+        ctx.moveTo(x + r, y + 3);
+        ctx.bezierCurveTo(x + w * 0.2, y - 2, x + w * 0.4, y + 4, x + w * 0.5, y + 1);
+        ctx.bezierCurveTo(x + w * 0.6, y - 2, x + w * 0.8, y + 3, x + w - r, y + 2);
+        // Right edge
+        ctx.bezierCurveTo(x + w + 2, y + 4, x + w + 1, y + r, x + w - 1, y + h * 0.3);
+        ctx.bezierCurveTo(x + w + 2, y + h * 0.5, x + w - 1, y + h * 0.7, x + w, y + h - r);
+        // Bottom edge
+        ctx.bezierCurveTo(x + w + 1, y + h + 1, x + w - r, y + h - 1, x + w * 0.7, y + h + 2);
+        ctx.bezierCurveTo(x + w * 0.5, y + h - 2, x + w * 0.3, y + h + 3, x + r, y + h);
+        // Left edge
+        ctx.bezierCurveTo(x - 1, y + h + 1, x + 1, y + h - r, x + 2, y + h * 0.7);
+        ctx.bezierCurveTo(x - 1, y + h * 0.5, x + 2, y + h * 0.3, x + 1, y + r);
+        ctx.bezierCurveTo(x - 1, y + 2, x + r - 2, y + 4, x + r, y + 3);
         ctx.closePath();
     }
 
