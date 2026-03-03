@@ -3,18 +3,21 @@ import { generateChallenge, GENERATORS } from '../js/challenges.js';
 
 // Proxy-based canvas context mock — accepts any property/method call so it
 // won't break if challenge rendering adds new canvas API calls in the future.
-function createMockCtx() {
+// Methods return a proxy too, so chained calls (e.g. createRadialGradient().addColorStop()) work.
+function createMockProxy() {
     return new Proxy({}, {
         get(target, prop) {
             if (prop in target) return target[prop];
-            // Return a no-op function for any unknown method
-            return () => {};
+            return (..._args) => createMockProxy();
         },
         set(target, prop, value) {
             target[prop] = value;
             return true;
         },
     });
+}
+function createMockCtx() {
+    return createMockProxy();
 }
 
 const AREA = { x: 0, y: 0, w: 960, h: 540 };

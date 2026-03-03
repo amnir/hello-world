@@ -31,11 +31,11 @@ const COLORS = [
 ];
 
 const SHAPES = [
-    { name: 'עיגול', nameEn: 'circle', emoji: '🔴' },
-    { name: 'ריבוע', nameEn: 'square', emoji: '🟧' },
-    { name: 'משולש', nameEn: 'triangle', emoji: '🔺' },
-    { name: 'כוכב', nameEn: 'star', emoji: '⭐' },
-    { name: 'לב', nameEn: 'heart', emoji: '❤️' },
+    { name: 'עיגול', nameEn: 'circle' },
+    { name: 'ריבוע', nameEn: 'square' },
+    { name: 'משולש', nameEn: 'triangle' },
+    { name: 'כוכב', nameEn: 'star' },
+    { name: 'לב', nameEn: 'heart' },
 ];
 
 const FRUITS = [
@@ -116,31 +116,105 @@ function randChoice(arr) {
 // ─── Shape Drawing Helpers (for challenge rendering) ─────────────────────────
 
 function drawShapeAt(ctx, shape, x, y, size, color = '#3498db') {
-    ctx.fillStyle = color;
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 2;
+    ctx.save();
+
+    // Drop shadow
+    ctx.shadowColor = 'rgba(0,0,0,0.25)';
+    ctx.shadowBlur = size * 0.25;
+    ctx.shadowOffsetX = size * 0.06;
+    ctx.shadowOffsetY = size * 0.1;
+
+    // Darken helper: blend color toward black for gradient edge
+    const darken = (hex, amt) => {
+        const n = parseInt(hex.replace('#', ''), 16);
+        const r = Math.max(0, (n >> 16) - amt);
+        const g = Math.max(0, ((n >> 8) & 0xff) - amt);
+        const b = Math.max(0, (n & 0xff) - amt);
+        return `rgb(${r},${g},${b})`;
+    };
 
     switch (shape) {
-        case 'circle':
+        case 'circle': {
+            const grad = ctx.createRadialGradient(
+                x - size * 0.3, y - size * 0.3, size * 0.1,
+                x, y, size
+            );
+            grad.addColorStop(0, '#fff');
+            grad.addColorStop(0.25, color);
+            grad.addColorStop(1, darken(color, 60));
+            ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.arc(x, y, size, 0, Math.PI * 2);
             ctx.fill();
-            ctx.stroke();
+
+            // Glossy highlight
+            ctx.shadowColor = 'transparent';
+            ctx.beginPath();
+            ctx.ellipse(x - size * 0.2, y - size * 0.35, size * 0.35, size * 0.18, -0.3, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.45)';
+            ctx.fill();
             break;
-        case 'square':
-            ctx.fillRect(x - size, y - size, size * 2, size * 2);
-            ctx.strokeRect(x - size, y - size, size * 2, size * 2);
+        }
+        case 'square': {
+            const r = size * 0.25; // corner radius
+            const grad = ctx.createLinearGradient(x - size, y - size, x + size, y + size);
+            grad.addColorStop(0, '#fff');
+            grad.addColorStop(0.2, color);
+            grad.addColorStop(1, darken(color, 60));
+            ctx.fillStyle = grad;
+
+            // Rounded rect path
+            ctx.beginPath();
+            ctx.moveTo(x - size + r, y - size);
+            ctx.lineTo(x + size - r, y - size);
+            ctx.quadraticCurveTo(x + size, y - size, x + size, y - size + r);
+            ctx.lineTo(x + size, y + size - r);
+            ctx.quadraticCurveTo(x + size, y + size, x + size - r, y + size);
+            ctx.lineTo(x - size + r, y + size);
+            ctx.quadraticCurveTo(x - size, y + size, x - size, y + size - r);
+            ctx.lineTo(x - size, y - size + r);
+            ctx.quadraticCurveTo(x - size, y - size, x - size + r, y - size);
+            ctx.closePath();
+            ctx.fill();
+
+            // Glossy highlight
+            ctx.shadowColor = 'transparent';
+            ctx.beginPath();
+            ctx.ellipse(x - size * 0.15, y - size * 0.4, size * 0.55, size * 0.2, -0.15, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.35)';
+            ctx.fill();
             break;
-        case 'triangle':
+        }
+        case 'triangle': {
+            const grad = ctx.createLinearGradient(x, y - size, x, y + size * 0.7);
+            grad.addColorStop(0, '#fff');
+            grad.addColorStop(0.25, color);
+            grad.addColorStop(1, darken(color, 60));
+            ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.moveTo(x, y - size);
             ctx.lineTo(x + size, y + size * 0.7);
             ctx.lineTo(x - size, y + size * 0.7);
             ctx.closePath();
             ctx.fill();
-            ctx.stroke();
+
+            // Glossy highlight near top
+            ctx.shadowColor = 'transparent';
+            ctx.beginPath();
+            ctx.ellipse(x, y - size * 0.35, size * 0.3, size * 0.15, 0, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.fill();
             break;
+        }
         case 'star': {
+            const grad = ctx.createRadialGradient(
+                x - size * 0.2, y - size * 0.2, size * 0.1,
+                x, y, size
+            );
+            grad.addColorStop(0, '#fff');
+            grad.addColorStop(0.3, color);
+            grad.addColorStop(1, darken(color, 55));
+            ctx.fillStyle = grad;
             ctx.beginPath();
             for (let i = 0; i < 10; i++) {
                 const r = i % 2 === 0 ? size : size * 0.45;
@@ -152,33 +226,52 @@ function drawShapeAt(ctx, shape, x, y, size, color = '#3498db') {
             }
             ctx.closePath();
             ctx.fill();
-            ctx.stroke();
+
+            // Central glow
+            ctx.shadowColor = 'transparent';
+            ctx.beginPath();
+            ctx.arc(x - size * 0.1, y - size * 0.15, size * 0.2, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.fill();
             break;
         }
         case 'heart': {
-            // Center the heart on (x, y), proportions matched to ❤️ emoji
-            const tip = y + size * 0.9;    // bottom tip
-            const dip = y - size * 0.2;    // center dip between bumps
+            const tip = y + size * 0.9;
+            const dip = y - size * 0.2;
+            const grad = ctx.createRadialGradient(
+                x - size * 0.3, y - size * 0.4, size * 0.1,
+                x, y, size * 1.3
+            );
+            grad.addColorStop(0, '#fff');
+            grad.addColorStop(0.25, color);
+            grad.addColorStop(1, darken(color, 60));
+            ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.moveTo(x, tip);
-            // Left half: wider bumps to match emoji proportions
             ctx.bezierCurveTo(
-                x - size * 1.5, y + size * 0.1,   // wide at bottom
-                x - size * 0.85, y - size * 1.2,  // apex: high, slightly inward
-                x, dip                              // center dip
+                x - size * 1.5, y + size * 0.1,
+                x - size * 0.85, y - size * 1.2,
+                x, dip
             );
-            // Right half: mirror
             ctx.bezierCurveTo(
-                x + size * 0.85, y - size * 1.2,  // apex: high, slightly inward
-                x + size * 1.5, y + size * 0.1,   // wide at bottom
-                x, tip                              // back to tip
+                x + size * 0.85, y - size * 1.2,
+                x + size * 1.5, y + size * 0.1,
+                x, tip
             );
             ctx.closePath();
             ctx.fill();
-            ctx.stroke();
+
+            // Glossy highlight on left bump
+            ctx.shadowColor = 'transparent';
+            ctx.beginPath();
+            ctx.ellipse(x - size * 0.4, y - size * 0.55, size * 0.25, size * 0.13, -0.4, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.fill();
             break;
         }
     }
+
+    ctx.restore();
 }
 
 // ─── Challenge Generators ───────────────────────────────────────────────────
@@ -444,6 +537,8 @@ function generateShapeChallenge() {
     const selected = shuffle(SHAPES).slice(0, 3);
     const correctIdx = randInt(0, 2);
     const correctShape = selected[correctIdx];
+    const shapeColor = randChoice(COLORS).color;
+
     return {
         type: 'shapes',
         questionText: `מצאו את ה${correctShape.name}`,
@@ -457,7 +552,7 @@ function generateShapeChallenge() {
             ctx.textBaseline = 'middle';
             ctx.fillText('🔊', x + w / 2, y + h * 0.25);
 
-            // Answer options: 3 shape emoji
+            // Answer options: 3 shapes
             this.optionAreas = [];
             const btnSize = Math.min(w * 0.24, h * 0.28);
             const spacing = w * 0.28;
@@ -479,10 +574,7 @@ function generateShapeChallenge() {
                     ctx.stroke();
                 }
 
-                ctx.font = `${btnSize * 0.55}px ${F}`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(shape.emoji, cx, optY);
+                drawShapeAt(ctx, shape.nameEn, cx, optY, btnSize * 0.35, shapeColor);
 
                 this.optionAreas[i] = {
                     x: cx - btnSize * 0.6, y: optY - btnSize * 0.6,
