@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Wisdom Defenders (שומרי החוכמה) — a browser-based educational tower defense game for Hebrew-speaking pre-schoolers (ages 5-6), inspired by Plants vs Zombies. Pure HTML5 Canvas + vanilla JavaScript with no external dependencies. Installable as a PWA (`manifest.json` + `sw.js`).
+Wisdom Defenders (שומרי החוכמה) — a browser-based educational tower defense game for Hebrew-speaking pre-schoolers (ages 5-6), inspired by Plants vs Zombies. Pure HTML5 Canvas + vanilla JavaScript with no external runtime dependencies. Installable as a PWA (`manifest.json` + `sw.js`).
 
 ## Running the Project
 
@@ -31,15 +31,15 @@ Test files live in `tests/` and mirror source modules: `challenges.test.js`, `ga
 
 Seven JS modules, all interconnected via ES6 imports:
 
-- **js/game.js** — Main game engine. Contains the `Game` class which is a state machine (MENU → LEVEL_SELECT → PLAYING → CHALLENGE → WAVE_CLEAR → LEVEL_WON/LEVEL_LOST → STICKER_BOOK). Handles the game loop, input (mouse + touch), entity management (defenders/enemies/projectiles arrays), collision detection, and rendering. Persists progress via localStorage.
+- **js/game.js** — Main game engine. Contains the `Game` class which is a state machine (MENU → LEVEL_SELECT → PLAYING → PAUSED → CHALLENGE → WAVE_CLEAR → LEVEL_WON/LEVEL_LOST → STICKER_BOOK → SETTINGS). Handles the game loop, input (mouse + touch), entity management (defenders/enemies/projectiles arrays), collision detection, and rendering. Persists progress via localStorage.
 
 - **js/game-logic.js** — Pure functions and constants extracted from game.js for testability. Grid constants, coordinate conversion (`screenToGrid`/`gridToScreen`), wave timing, combo rewards.
 
 - **js/sprites.js** — All graphics drawn programmatically on canvas (no image assets). Exports `DEFENDER_SPRITES` and `ENEMY_SPRITES` objects keyed by type name, plus UI drawing helpers. Animations are time-based using an `elapsed` parameter.
 
-- **js/levels.js** — Game content definitions: `DEFENDER_DEFS` (7 types with stats), `ENEMY_DEFS` (6 types), and `LEVELS` array (10 levels with wave compositions, available defenders, and challenge types).
+- **js/levels.js** — Game content definitions: `DEFENDER_DEFS`, `ENEMY_DEFS`, and `LEVELS` array with wave compositions, available defenders, and challenge types.
 
-- **js/challenges.js** — 14 educational mini-game types (counting, colors, letters, shapes, patterns, animals, shapeColor, mathCompare, countCompare, oddOneOut, countExact, nextNumber, sizeCompare, pairMatch). Each challenge type provides `render()`, `checkAnswer()`, and `handleHover()` methods. All challenges are visual-only (no reading required).
+- **js/challenges.js** — Educational mini-game challenges. Each type is registered in the `GENERATORS` export and provides `render()`, `checkAnswer()`, and `handleHover()` methods. All challenges are visual-only (no reading required).
 
 - **js/audio.js** — Sound effects and background music synthesized via Web Audio API (no audio files). Uses Web Speech API for Hebrew text-to-speech instructions.
 
