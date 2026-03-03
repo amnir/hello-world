@@ -1,5 +1,5 @@
 // Bump version to force re-cache when files change
-const CACHE_NAME = 'wisdom-defenders-v4';
+const CACHE_NAME = 'wisdom-defenders-v5';
 const ASSETS = [
     './',
     './index.html',
@@ -9,10 +9,18 @@ const ASSETS = [
     './js/levels.js',
     './js/challenges.js',
     './js/audio.js',
+    './js/assets.js',
     './manifest.json',
     './icons/icon.svg',
     './icons/icon-192.png',
     './icons/icon-512.png',
+    './assets/defenders/number-buddy.png',
+    './assets/defenders/letter-lion.png',
+    './assets/defenders/color-flower.png',
+    './assets/defenders/shape-shield.png',
+    './assets/defenders/star-maker.png',
+    './assets/defenders/pattern-peacock.png',
+    './assets/defenders/music-bird.png',
 ];
 
 // Install: cache all assets
