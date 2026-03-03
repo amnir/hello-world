@@ -332,10 +332,11 @@ class Game {
     // ─── Menu Handlers ──────────────────────────────────────────────────
 
     onMenuClick(pos) {
-        // Play button area (center of screen)
-        const btnX = CANVAS_W / 2 - 80;
-        const btnY = CANVAS_H * 0.55;
-        if (pos.x >= btnX && pos.x <= btnX + 160 && pos.y >= btnY && pos.y <= btnY + 60) {
+        // Play button area (centered below stone sign)
+        const btnW = 200, btnH = 60;
+        const btnX = CANVAS_W / 2 - btnW / 2;
+        const btnY = 230;
+        if (pos.x >= btnX && pos.x <= btnX + btnW && pos.y >= btnY && pos.y <= btnY + btnH) {
             playClick();
             this.state = STATE.LEVEL_SELECT;
         }
@@ -1184,11 +1185,11 @@ class Game {
     renderMenu() {
         const ctx = this.ctx;
 
-        // Sky background
+        // ── Sky Background ──
         const skyGrad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
         skyGrad.addColorStop(0, '#87CEEB');
-        skyGrad.addColorStop(0.7, '#b8e6f0');
-        skyGrad.addColorStop(1, '#98FB98');
+        skyGrad.addColorStop(0.6, '#b8e6f0');
+        skyGrad.addColorStop(1, '#a8d8a8');
         ctx.fillStyle = skyGrad;
         ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
@@ -1197,7 +1198,6 @@ class Game {
         const sunBaseR = 45;
         const sunPulse = sunBaseR + Math.sin(this.time * 2) * 5;
 
-        // Outer glow layers
         ctx.fillStyle = 'rgba(241, 196, 15, 0.1)';
         ctx.beginPath();
         ctx.arc(sunX, sunY, sunPulse + 40, 0, Math.PI * 2);
@@ -1211,7 +1211,6 @@ class Game {
         ctx.arc(sunX, sunY, sunPulse + 12, 0, Math.PI * 2);
         ctx.fill();
 
-        // Rotating triangular rays
         const rayRotation = this.time * 0.3;
         ctx.fillStyle = '#f1c40f';
         for (let r = 0; r < 12; r++) {
@@ -1228,12 +1227,10 @@ class Game {
             ctx.restore();
         }
 
-        // Main sun circle
         ctx.fillStyle = '#f1c40f';
         ctx.beginPath();
         ctx.arc(sunX, sunY, sunPulse, 0, Math.PI * 2);
         ctx.fill();
-        // Sun highlight
         ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
         ctx.beginPath();
         ctx.arc(sunX - 10, sunY - 10, sunPulse * 0.45, 0, Math.PI * 2);
@@ -1272,7 +1269,6 @@ class Game {
             ctx.globalAlpha = alpha;
             ctx.fillStyle = '#fff';
             ctx.beginPath();
-            // 4-pointed star
             ctx.moveTo(s.x, s.y - sz);
             ctx.lineTo(s.x + sz * 0.3, s.y - sz * 0.3);
             ctx.lineTo(s.x + sz, s.y);
@@ -1286,118 +1282,216 @@ class Game {
             ctx.restore();
         }
 
-        // ── Title Text Animation ──
-        const titleY = CANVAS_H * 0.2 + Math.sin(this.time * 1.5) * 6;
-        const titleScale = 1 + Math.sin(this.time * 2) * 0.03;
+        // ── Stone Sign ──
+        const signW = 400, signH = 160;
+        const signX = CANVAS_W / 2 - signW / 2;
+        const signY = 30;
+
         ctx.save();
-        ctx.translate(CANVAS_W / 2, titleY);
-        ctx.scale(titleScale, titleScale);
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.font = `bold 52px ${F}`;
-        // Outer glow
-        ctx.shadowColor = 'rgba(241, 196, 15, 0.5)';
+        ctx.shadowColor = 'rgba(0,0,0,0.3)';
         ctx.shadowBlur = 15;
-        // Drop shadow
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.fillText('שומרי החוכמה', 3, 4);
-        ctx.shadowBlur = 0;
-        // Thick outline
-        ctx.strokeStyle = '#1a252f';
-        ctx.lineWidth = 5;
-        ctx.strokeText('שומרי החוכמה', 0, 0);
-        // Gradient fill
-        const titleGrad = ctx.createLinearGradient(-150, -25, 150, 25);
-        titleGrad.addColorStop(0, '#f39c12');
-        titleGrad.addColorStop(0.5, '#f1c40f');
-        titleGrad.addColorStop(1, '#e67e22');
-        ctx.fillStyle = titleGrad;
-        ctx.fillText('שומרי החוכמה', 0, 0);
+        ctx.shadowOffsetY = 5;
+        const stoneGrad = ctx.createLinearGradient(signX, signY, signX, signY + signH);
+        stoneGrad.addColorStop(0, '#d4cbbf');
+        stoneGrad.addColorStop(0.3, '#c2b8a8');
+        stoneGrad.addColorStop(0.7, '#b0a590');
+        stoneGrad.addColorStop(1, '#9a8e78');
+        ctx.fillStyle = stoneGrad;
+        this.roundRect(ctx, signX, signY, signW, signH, 20);
+        ctx.fill();
         ctx.restore();
 
-        // Subtitle with offset phase
-        const subY = CANVAS_H * 0.3 + Math.sin(this.time * 1.5 + 0.8) * 5;
+        // Stone border
+        ctx.strokeStyle = '#7a6e5e';
+        ctx.lineWidth = 3;
+        this.roundRect(ctx, signX, signY, signW, signH, 20);
+        ctx.stroke();
+
+        // Inner bevel highlight
+        ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+        ctx.lineWidth = 2;
+        this.roundRect(ctx, signX + 5, signY + 4, signW - 10, signH - 8, 16);
+        ctx.stroke();
+
+        // Stone texture spots
         ctx.save();
+        this.roundRect(ctx, signX, signY, signW, signH, 20);
+        ctx.clip();
+        for (let i = 0; i < 30; i++) {
+            const tx = signX + 15 + ((i * 43 + 7) % (signW - 30));
+            const ty = signY + 12 + ((i * 31 + 11) % (signH - 24));
+            ctx.fillStyle = `rgba(0,0,0,${0.025 + (i % 4) * 0.012})`;
+            ctx.beginPath();
+            ctx.arc(tx, ty, 2 + (i % 3) * 1.2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+
+        // ── Green Vines on Sign ──
+        this.drawMenuVine(ctx, signX + 15, signY + 5, -1);
+        this.drawMenuVine(ctx, signX + signW - 15, signY + 5, 1);
+
+        // ── Title Text on Sign ──
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        // Drop shadow
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-        ctx.font = `24px ${F}`;
-        ctx.fillText('Wisdom Defenders', CANVAS_W / 2 + 2, subY + 2);
-        // Main subtitle
-        ctx.fillStyle = '#5d6d7e';
-        ctx.fillText('Wisdom Defenders', CANVAS_W / 2, subY);
-        ctx.restore();
+        ctx.font = `bold 50px ${F}`;
 
-        // ── All 7 Defenders in Showcase Row ──
-        const defenderNames = [
-            'starMaker', 'numberBuddy', 'letterLion', 'colorFlower',
-            'shapeShield', 'patternPeacock', 'musicBird'
-        ];
-        const defStartX = 100;
-        const defSpacing = (CANVAS_W - 200) / (defenderNames.length - 1);
-        const defBaseY = 365;
-        for (let i = 0; i < defenderNames.length; i++) {
-            const dx = defStartX + i * defSpacing;
-            const dy = defBaseY + Math.sin(this.time * 2 + i * 0.9) * 8;
-            DEFENDER_SPRITES[defenderNames[i]](ctx, dx, dy, 32, this.time);
-        }
+        // "שומרי" in blue
+        const titleY1 = signY + 58;
+        ctx.fillStyle = 'rgba(0,0,0,0.15)';
+        ctx.fillText('שומרי', CANVAS_W / 2 + 2, titleY1 + 3);
+        ctx.strokeStyle = '#1a3a5c';
+        ctx.lineWidth = 5;
+        ctx.lineJoin = 'round';
+        ctx.strokeText('שומרי', CANVAS_W / 2, titleY1);
+        const blueGrad = ctx.createLinearGradient(
+            CANVAS_W / 2 - 80, titleY1 - 20,
+            CANVAS_W / 2 + 80, titleY1 + 20
+        );
+        blueGrad.addColorStop(0, '#2471a3');
+        blueGrad.addColorStop(0.5, '#2e86c1');
+        blueGrad.addColorStop(1, '#2471a3');
+        ctx.fillStyle = blueGrad;
+        ctx.fillText('שומרי', CANVAS_W / 2, titleY1);
+
+        // "החוכמה" in orange
+        const titleY2 = signY + 112;
+        ctx.fillStyle = 'rgba(0,0,0,0.15)';
+        ctx.fillText('החוכמה', CANVAS_W / 2 + 2, titleY2 + 3);
+        ctx.strokeStyle = '#8b4513';
+        ctx.lineWidth = 5;
+        ctx.strokeText('החוכמה', CANVAS_W / 2, titleY2);
+        const orangeGrad = ctx.createLinearGradient(
+            CANVAS_W / 2 - 80, titleY2 - 20,
+            CANVAS_W / 2 + 80, titleY2 + 20
+        );
+        orangeGrad.addColorStop(0, '#e67e22');
+        orangeGrad.addColorStop(0.5, '#f39c12');
+        orangeGrad.addColorStop(1, '#e67e22');
+        ctx.fillStyle = orangeGrad;
+        ctx.fillText('החוכמה', CANVAS_W / 2, titleY2);
 
         // ── Play Button with Pulsing Glow ──
-        const btnX = CANVAS_W / 2 - 80;
-        const btnY = CANVAS_H * 0.55;
+        const btnW = 200, btnH = 60;
+        const btnX = CANVAS_W / 2 - btnW / 2;
+        const btnY = 230;
         const glowIntensity = 8 + Math.sin(this.time * 3) * 6;
         ctx.save();
         ctx.shadowColor = 'rgba(46, 204, 113, 0.6)';
         ctx.shadowBlur = glowIntensity;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
-        this.drawButton(ctx, btnX, btnY, 160, 60, 15, '#2ecc71', '#27ae60');
+        this.drawButton(ctx, btnX, btnY, btnW, btnH, 18, '#2ecc71', '#27ae60');
         ctx.restore();
 
-        ctx.font = `bold 28px ${F}`;
+        ctx.font = `bold 30px ${F}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        this.drawOutlinedText(ctx, '\u200Fבואו נשחק!', CANVAS_W / 2, btnY + 30, '#fff', '#1a7a42', 3);
+        this.drawOutlinedText(ctx, '\u200Fבואו נשחק!', CANVAS_W / 2, btnY + btnH / 2, '#fff', '#1a7a42', 3);
 
-        // ── Wandering Enemies ──
-        const enemies = [
-            { name: 'muddleCloud', startX: 0, speed: 25, y: 435 },
-            { name: 'messMonster', startX: 250, speed: 18, y: 450 },
-            { name: 'sleepySnail', startX: 500, speed: 12, y: 440 },
-            { name: 'gigglyGremlin', startX: 750, speed: 22, y: 455 },
+        // ── Background Trees/Bushes ──
+        const treeSets = [
+            { x: 55,  cy: 370, r: 38 },
+            { x: 145, cy: 360, r: 45 },
+            { x: 270, cy: 372, r: 35 },
+            { x: 380, cy: 365, r: 42 },
+            { x: 490, cy: 370, r: 38 },
+            { x: 590, cy: 358, r: 48 },
+            { x: 700, cy: 372, r: 36 },
+            { x: 800, cy: 363, r: 44 },
+            { x: 905, cy: 370, r: 40 },
         ];
-        for (const e of enemies) {
-            const ex = (e.startX + this.time * e.speed) % (CANVAS_W + 100) - 50;
-            ENEMY_SPRITES[e.name](ctx, ex, e.y, 26, this.time);
+        for (const t of treeSets) {
+            // Trunk
+            ctx.fillStyle = '#6b4f2e';
+            ctx.fillRect(t.x - 5, t.cy, 10, 50);
+            // Darker back canopy
+            ctx.fillStyle = '#1e8449';
+            ctx.beginPath();
+            ctx.arc(t.x, t.cy, t.r + 4, 0, Math.PI * 2);
+            ctx.fill();
+            // Main canopy
+            ctx.fillStyle = '#27ae60';
+            ctx.beginPath();
+            ctx.arc(t.x, t.cy - 3, t.r, 0, Math.PI * 2);
+            ctx.fill();
+            // Highlight
+            ctx.fillStyle = 'rgba(46, 204, 113, 0.45)';
+            ctx.beginPath();
+            ctx.arc(t.x - t.r * 0.25, t.cy - t.r * 0.35, t.r * 0.5, 0, Math.PI * 2);
+            ctx.fill();
         }
 
-        // ── Enhanced Grass with Dual-Wave Animation ──
-        ctx.fillStyle = '#27ae60';
-        ctx.fillRect(0, CANVAS_H - 40, CANVAS_W, 40);
-
-        // Layer 1: darker grass blades
+        // ── Rolling Green Hills ──
+        // Back hill (darkest)
         ctx.fillStyle = '#1e8449';
-        for (let i = 0; i < CANVAS_W; i += 12) {
-            const sway = Math.sin(i * 0.1 + this.time * 1.5) * 5;
-            const h = 14 + (i * 7 % 5);
+        ctx.beginPath();
+        ctx.moveTo(0, CANVAS_H);
+        for (let x = 0; x <= CANVAS_W; x += 4) {
+            ctx.lineTo(x, 420 - Math.sin(x * 0.005 + 0.5) * 20 - Math.cos(x * 0.003) * 12);
+        }
+        ctx.lineTo(CANVAS_W, CANVAS_H);
+        ctx.closePath();
+        ctx.fill();
+
+        // Middle hill
+        ctx.fillStyle = '#27ae60';
+        ctx.beginPath();
+        ctx.moveTo(0, CANVAS_H);
+        for (let x = 0; x <= CANVAS_W; x += 4) {
+            ctx.lineTo(x, 440 - Math.sin(x * 0.007 + 2) * 15 - Math.cos(x * 0.004 + 1) * 8);
+        }
+        ctx.lineTo(CANVAS_W, CANVAS_H);
+        ctx.closePath();
+        ctx.fill();
+
+        // Front hill (brightest)
+        ctx.fillStyle = '#2ecc71';
+        ctx.beginPath();
+        ctx.moveTo(0, CANVAS_H);
+        for (let x = 0; x <= CANVAS_W; x += 4) {
+            ctx.lineTo(x, 458 - Math.sin(x * 0.009 + 3.5) * 10 - Math.cos(x * 0.005 + 2) * 6);
+        }
+        ctx.lineTo(CANVAS_W, CANVAS_H);
+        ctx.closePath();
+        ctx.fill();
+
+        // ── Grass Blade Details ──
+        ctx.fillStyle = '#1e8449';
+        for (let i = 0; i < CANVAS_W; i += 14) {
+            const sway = Math.sin(i * 0.1 + this.time * 1.5) * 4;
+            const h = 10 + (i * 7 % 5);
+            const groundY = 458 - Math.sin(i * 0.009 + 3.5) * 10 - Math.cos(i * 0.005 + 2) * 6;
             ctx.beginPath();
-            ctx.moveTo(i, CANVAS_H - 40);
-            ctx.lineTo(i + 5 + sway, CANVAS_H - 40 - h);
-            ctx.lineTo(i + 10, CANVAS_H - 40);
+            ctx.moveTo(i, groundY);
+            ctx.lineTo(i + 4 + sway, groundY - h);
+            ctx.lineTo(i + 8, groundY);
+            ctx.fill();
+        }
+        ctx.fillStyle = '#2ecc71';
+        for (let i = 7; i < CANVAS_W; i += 18) {
+            const sway = Math.sin(i * 0.12 + this.time * 2 + 1) * 5;
+            const h = 8 + (i * 11 % 5);
+            const groundY = 458 - Math.sin(i * 0.009 + 3.5) * 10 - Math.cos(i * 0.005 + 2) * 6;
+            ctx.beginPath();
+            ctx.moveTo(i, groundY);
+            ctx.lineTo(i + 5 + sway, groundY - h);
+            ctx.lineTo(i + 10, groundY);
             ctx.fill();
         }
 
-        // Layer 2: lighter grass blades
-        ctx.fillStyle = '#2ecc71';
-        for (let i = 6; i < CANVAS_W; i += 15) {
-            const sway = Math.sin(i * 0.15 + this.time * 2 + 1) * 6;
-            const h = 12 + (i * 11 % 6);
-            ctx.beginPath();
-            ctx.moveTo(i, CANVAS_H - 40);
-            ctx.lineTo(i + 6 + sway, CANVAS_H - 40 - h);
-            ctx.lineTo(i + 12, CANVAS_H - 40);
-            ctx.fill();
+        // ── All 7 Defenders ──
+        const defenderNames = [
+            'starMaker', 'numberBuddy', 'letterLion', 'colorFlower',
+            'shapeShield', 'patternPeacock', 'musicBird'
+        ];
+        const defStartX = 100;
+        const defSpacing = (CANVAS_W - 200) / (defenderNames.length - 1);
+        const defBaseY = 430;
+        for (let i = 0; i < defenderNames.length; i++) {
+            const dx = defStartX + i * defSpacing;
+            const dy = defBaseY + Math.sin(this.time * 2 + i * 0.9) * 6;
+            DEFENDER_SPRITES[defenderNames[i]](ctx, dx, dy, 34, this.time);
         }
     }
 
@@ -2683,6 +2777,91 @@ class Game {
     }
 
     // ─── Helpers ────────────────────────────────────────────────────────
+
+    /** Draw a decorative vine with leaves for the menu stone sign */
+    drawMenuVine(ctx, startX, startY, dir) {
+        ctx.save();
+        // Main vine stem
+        ctx.strokeStyle = '#27ae60';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        const cp1x = startX + dir * 30;
+        const cp1y = startY + 40;
+        const cp2x = startX + dir * 12;
+        const cp2y = startY + 80;
+        const endX = startX + dir * 35;
+        const endY = startY + 110;
+        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY);
+        ctx.stroke();
+
+        // Small branch
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const bx = startX + dir * 22;
+        const by = startY + 50;
+        ctx.moveTo(bx, by);
+        ctx.quadraticCurveTo(bx + dir * 18, by - 5, bx + dir * 22, by + 8);
+        ctx.stroke();
+
+        // Leaves along the vine
+        const leaves = [
+            { t: 0.15, angle: dir * -0.6, sz: 1.0 },
+            { t: 0.35, angle: dir * 0.7, sz: 1.2 },
+            { t: 0.55, angle: dir * -0.5, sz: 1.0 },
+            { t: 0.75, angle: dir * 0.6, sz: 0.9 },
+            { t: 0.9, angle: dir * -0.3, sz: 0.8 },
+        ];
+        for (const lp of leaves) {
+            const t = lp.t;
+            const mt = 1 - t;
+            // Cubic bezier point
+            const lx = mt * mt * mt * startX + 3 * mt * mt * t * cp1x
+                + 3 * mt * t * t * cp2x + t * t * t * endX;
+            const ly = mt * mt * mt * startY + 3 * mt * mt * t * cp1y
+                + 3 * mt * t * t * cp2y + t * t * t * endY;
+            ctx.save();
+            ctx.translate(lx, ly);
+            ctx.rotate(lp.angle);
+            // Leaf shape
+            ctx.fillStyle = '#2ecc71';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 11 * lp.sz, 5 * lp.sz, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // Darker leaf tip
+            ctx.fillStyle = '#27ae60';
+            ctx.beginPath();
+            ctx.ellipse(4 * lp.sz, 0, 6 * lp.sz, 3 * lp.sz, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // Leaf vein
+            ctx.strokeStyle = '#1e8449';
+            ctx.lineWidth = 0.8;
+            ctx.beginPath();
+            ctx.moveTo(-8 * lp.sz, 0);
+            ctx.lineTo(8 * lp.sz, 0);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // Extra leaf on branch
+        ctx.save();
+        ctx.translate(bx + dir * 20, by + 5);
+        ctx.rotate(dir * 0.4);
+        ctx.fillStyle = '#2ecc71';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 10, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#1e8449';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(-7, 0);
+        ctx.lineTo(7, 0);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.restore();
+    }
 
     /**
      * Draw a polished button with gradient, highlight, and drop shadow.
