@@ -74,18 +74,18 @@ const ANIMAL_FOODS = [
     { animal: '🐘', animalName: 'פיל', food: '🥜', foodName: 'בוטנים' },
     { animal: '🐸', animalName: 'צפרדע', food: '🪰', foodName: 'זבוב' },
     { animal: '🐻', animalName: 'דוב', food: '🍯', foodName: 'דבש' },
-    { animal: '🐴', animalName: 'סוס', food: '🥕', foodName: 'גזר' },
+    { animal: '🐴', animalName: 'סוס', food: '🌾', foodName: 'חציר' },
 ];
 
 const PAIRS = [
-    { item: '☂️', itemName: 'מטרייה', match: '🌧️', matchName: 'גשם', wrong: ['🌞', '🍎'] },
-    { item: '🔑', itemName: 'מפתח', match: '🚪', matchName: 'דלת', wrong: ['🌸', '⭐'] },
-    { item: '🪥', itemName: 'מברשת שיניים', match: '🦷', matchName: 'שן', wrong: ['👟', '🎈'] },
-    { item: '🧦', itemName: 'גרב', match: '👟', matchName: 'נעל', wrong: ['🌞', '🍌'] },
-    { item: '🖍️', itemName: 'צבע', match: '📄', matchName: 'נייר', wrong: ['🍕', '⚽'] },
-    { item: '🌺', itemName: 'פרח', match: '🐝', matchName: 'דבורה', wrong: ['❄️', '🔑'] },
-    { item: '🛏️', itemName: 'מיטה', match: '🌙', matchName: 'ירח', wrong: ['⚽', '🥕'] },
-    { item: '🍳', itemName: 'מחבת', match: '🔥', matchName: 'אש', wrong: ['📚', '🎵'] },
+    { item: '☂️', itemName: 'מטרייה', question: 'מטרייה פותחים כשיש...', match: '🌧️', matchName: 'גשם', wrong: ['🌞', '🍎'] },
+    { item: '🔑', itemName: 'מפתח', question: 'מפתח פותח...', match: '🚪', matchName: 'דלת', wrong: ['🌸', '⭐'] },
+    { item: '🪥', itemName: 'מברשת שיניים', question: 'מברשת שיניים מנקה...', match: '🦷', matchName: 'שן', wrong: ['👟', '🎈'] },
+    { item: '🧦', itemName: 'גרב', question: 'גרב נכנסת ל...', match: '👟', matchName: 'נעל', wrong: ['🌞', '🍌'] },
+    { item: '🖍️', itemName: 'צבע', question: 'צבע צובעים על...', match: '📄', matchName: 'נייר', wrong: ['🍕', '⚽'] },
+    { item: '🌺', itemName: 'פרח', question: 'מי בא לפרח?', match: '🐝', matchName: 'דבורה', wrong: ['❄️', '🔑'] },
+    { item: '🛏️', itemName: 'מיטה', question: 'ישנים במיטה כשיש...', match: '🌙', matchName: 'ירח', wrong: ['⚽', '🥕'] },
+    { item: '🍳', itemName: 'מחבת', question: 'מחבת שמים על...', match: '🔥', matchName: 'אש', wrong: ['📚', '🎵'] },
 ];
 
 const HABITATS = [
@@ -820,17 +820,11 @@ function generateShapeColorChallenge() {
     const correctShape = allShapes[correctIdx];
     const correctColor = allColors[correctIdx];
 
-    // Ensure wrong options differ: wrong A = right shape / wrong color, wrong B = right color / wrong shape
-    const options = allShapes.map((s, i) => ({
-        shape: i === correctIdx ? correctShape :
-               i === (correctIdx + 1) % 3 ? correctShape : allShapes[i],
-        color: i === correctIdx ? correctColor :
-               i === (correctIdx + 1) % 3 ? allColors[(correctIdx + 1) % 3] : correctColor,
-    }));
-    // Override: make sure option[correctIdx] is correct, one has same shape diff color, one has same color diff shape
-    options[correctIdx] = { shape: correctShape, color: correctColor };
+    // Wrong A = right shape / wrong color; Wrong B = right color / wrong shape
     const wrongA = (correctIdx + 1) % 3;
     const wrongB = (correctIdx + 2) % 3;
+    const options = [];
+    options[correctIdx] = { shape: correctShape, color: correctColor };
     options[wrongA] = { shape: correctShape, color: allColors[wrongA] };
     options[wrongB] = { shape: allShapes[wrongB], color: correctColor };
 
@@ -921,7 +915,7 @@ function generateMathCompareChallenge() {
 
     return {
         type: 'mathCompare',
-        questionText: isBiggest ? 'איפה המספר הכי גדול?' : 'איפה המספר הכי קטן?',
+        questionText: isBiggest ? 'מה המספר הכי גדול?' : 'מה המספר הכי קטן?',
         correctIndex: correctIdx,
         render(ctx, area, time) {
             const { x, y, w, h } = area;
@@ -934,7 +928,7 @@ function generateMathCompareChallenge() {
 
             ctx.fillStyle = '#2c3e50';
             ctx.font = `bold ${h * 0.07}px ${F}`;
-            ctx.fillText(isBiggest ? '\u200Fהכי גדול?' : '\u200Fהכי קטן?', x + w / 2, y + h * 0.42);
+            ctx.fillText(isBiggest ? '\u200Fמה הכי גדול?' : '\u200Fמה הכי קטן?', x + w / 2, y + h * 0.42);
 
             // Number buttons
             this.optionAreas = [];
@@ -1506,7 +1500,7 @@ function generatePairMatchChallenge() {
 
     return {
         type: 'pairMatch',
-        questionText: `מה הולך עם ה${pair.itemName}?`,
+        questionText: pair.question,
         correctIndex: correctIdx,
         render(ctx, area, time) {
             const { x, y, w, h } = area;
@@ -1520,7 +1514,7 @@ function generatePairMatchChallenge() {
             // Question
             ctx.fillStyle = '#2c3e50';
             ctx.font = `bold ${h * 0.07}px ${F}`;
-            ctx.fillText(`\u200Fמה הולך עם ה${pair.itemName}?`, x + w / 2, y + h * 0.44);
+            ctx.fillText(`\u200F${pair.question}`, x + w / 2, y + h * 0.44);
 
             // 3 emoji options
             this.optionAreas = [];
