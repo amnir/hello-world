@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprite Export &amp; AI Prompt Generator — Wisdom Defenders</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #0d1117;
+            color: #e6edf3;
+            padding: 24px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+            font-size: 24px;
+            color: #f1c40f;
+        }
+        .subtitle {
+            text-align: center;
+            color: #8b949e;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .controls label { color: #8b949e; font-size: 14px; align-self: center; }
+        .controls select, .controls input, .controls button {
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+            background: #161b22;
+            color: #e6edf3;
+        }
+        .controls button {
+            cursor: pointer;
+            background: #238636;
+            border-color: #238636;
+            font-weight: 600;
+        }
+        .controls button:hover { background: #2ea043; }
+        .controls button.secondary {
+            background: #21262d;
+            border-color: #30363d;
+        }
+        .controls button.secondary:hover { background: #30363d; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #21262d;
+            border-bottom: 1px solid #30363d;
+        }
+        .card-header h3 {
+            font-size: 15px;
+            color: #f0f6fc;
+        }
+        .card-header .tag {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .tag-defender { background: #0d419d; color: #79c0ff; }
+        .tag-enemy { background: #6e2c00; color: #f39c12; }
+        .tag-projectile { background: #1a4731; color: #3fb950; }
+        .tag-ui { background: #4a1d6e; color: #d2a8ff; }
+
+        .canvas-row {
+            display: flex;
+            justify-content: center;
+            padding: 12px;
+            gap: 8px;
+            background: #0d1117;
+        }
+        .canvas-row canvas {
+            border: 1px solid #21262d;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .canvas-row canvas:hover {
+            border-color: #58a6ff;
+        }
+
+        .prompt-section {
+            padding: 12px 16px;
+        }
+        .prompt-section .prompt-label {
+            font-size: 11px;
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .prompt-box {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #c9d1d9;
+            position: relative;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .prompt-box .copy-btn {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #8b949e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .prompt-box .copy-btn:hover { background: #30363d; color: #e6edf3; }
+
+        .size-info {
+            padding: 4px 16px 12px;
+            font-size: 11px;
+            color: #484f58;
+        }
+
+        .export-actions {
+            display: flex;
+            gap: 6px;
+            padding: 8px 16px 12px;
+        }
+        .export-actions button {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid #30363d;
+            background: #21262d;
+            color: #c9d1d9;
+            cursor: pointer;
+        }
+        .export-actions button:hover { background: #30363d; }
+
+        .section-title {
+            font-size: 18px;
+            color: #f0f6fc;
+            margin: 32px 0 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #21262d;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .batch-bar {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .batch-bar button {
+            font-size: 14px;
+            padding: 8px 20px;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+            background: #238636;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .batch-bar button:hover { background: #2ea043; }
+        .batch-bar button.secondary {
+            background: #21262d;
+            border-color: #30363d;
+            color: #c9d1d9;
+        }
+        .batch-bar button.secondary:hover { background: #30363d; }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #238636;
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+
+<h1>Sprite Export &amp; AI Prompt Generator</h1>
+<p class="subtitle">Reference renders + AI image generation prompts for every character in Wisdom Defenders</p>
+
+<div class="controls">
+    <label for="render-size">Render size:</label>
+    <select id="render-size">
+        <option value="128">128 &times; 128</option>
+        <option value="256" selected>256 &times; 256</option>
+        <option value="512">512 &times; 512</option>
+        <option value="1024">1024 &times; 1024</option>
+    </select>
+    <label for="bg-color">Background:</label>
+    <select id="bg-color">
+        <option value="transparent">Transparent</option>
+        <option value="#ffffff">White</option>
+        <option value="#0d1117">Dark</option>
+        <option value="#2ecc71">Green screen</option>
+    </select>
+    <button class="secondary" onclick="renderAll()">Re-render All</button>
+</div>
+
+<div class="batch-bar">
+    <button onclick="downloadAllPNGs()">Download All PNGs (.zip)</button>
+    <button class="secondary" onclick="copyAllPrompts()">Copy All Prompts</button>
+    <button class="secondary" onclick="downloadPromptSheet()">Download Prompt Sheet (.txt)</button>
+</div>
+
+<h2 class="section-title">Defenders (7)</h2>
+<div class="grid" id="defenders-grid"></div>
+
+<h2 class="section-title">Enemies (6)</h2>
+<div class="grid" id="enemies-grid"></div>
+
+<h2 class="section-title">Projectiles (6)</h2>
+<div class="grid" id="projectiles-grid"></div>
+
+<h2 class="section-title">UI Elements</h2>
+<div class="grid" id="ui-grid"></div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import {
+    DEFENDER_SPRITES, ENEMY_SPRITES,
+    drawCollectStar, drawHouse, drawProjectile,
+    drawHealthBar, drawSticker,
+} from '../js/sprites.js';
+
+// ── Character metadata with AI prompts ──────────────────────────────────────
+
+const CHARACTERS = {
+    defenders: [
+        {
+            id: 'starMaker',
+            name: 'Star Maker',
+            hebrewName: 'יוצר הכוכבים',
+            tag: 'defender',
+            drawFn: DEFENDER_SPRITES.starMaker,
+            role: 'Currency generator — produces stars (in-game currency). Does not attack.',
+            prompt: `A cute, friendly star character for a children's tower defense game (ages 5-6). The character is a golden 5-pointed star with a happy smiling face (big round eyes with shine highlights, rosy cheeks, open smile). Small sparkles orbit around it. Warm golden yellow (#f1c40f) body with subtle glow. The star gently rotates and pulses. Style: kawaii, rounded, soft-shaded, child-safe. Transparent background. Front-facing, centered.`,
+        },
+        {
+            id: 'numberBuddy',
+            name: 'Number Buddy',
+            hebrewName: 'חבר המספרים',
+            tag: 'defender',
+            drawFn: DEFENDER_SPRITES.numberBuddy,
+            role: 'Ranged attacker — shoots number projectiles. Teaches counting.',
+            prompt: `A cute, friendly calculator character for a children's tower defense game (ages 5-6). Blue rounded-rectangle body (#3498db) with small legs and waving stick arms. A green-tinted screen on the chest shows a number. A 3×2 grid of small button dots below the screen. Two big cheerful eyes sit above the body, with a small smile. Style: kawaii, rounded shapes, soft-shaded, child-safe. Transparent background. Front-facing, centered.`,
+        },
+        {
+            id: 'letterLion',
+            name: 'Letter Lion',
+            hebrewName: 'אריה האותיות',
+            tag: 'defender',
+            drawFn: DEFENDER_SPRITES.letterLion,
+            role: 'Ranged attacker — shoots Hebrew letter projectiles. Teaches the alphabet.',
+            prompt: `A cute, friendly cartoon lion character for a children's tower defense game (ages 5-6). Golden-orange body (#f39c12) with a fluffy orange mane made of overlapping oval shapes. A Hebrew letter "א" (Alef) displayed in red on the chest. Round head with big eyes, a small red nose, whiskers, and a happy smile. Small round paws at the bottom. A curvy tail with an orange tuft. Style: kawaii, rounded, soft-shaded, child-safe. Transparent background. Front-facing, centered.`,
+        },
+        {
+            id: 'colorFlower',
+            name: 'Color Flower',
+            hebrewName: 'פרח הצבעים',
+            tag: 'defender',
+            drawFn: DEFENDER_SPRITES.colorFlower,
+            role: 'Ranged attacker — shoots color splashes. Teaches color recognition.',
+            prompt: `A cute, friendly flower character for a children's tower defense game (ages 5-6). A green stem with two small leaves, topped by 7 rainbow-colored oval petals (red, orange, yellow, green, blue, purple, pink) arranged in a circle. The center is a warm golden-yellow face with big eyes, rosy cheeks, and a small smile. The flower gently sways. Style: kawaii, rounded, soft-shaded, child-safe, rainbow colors. Transparent background. Front-facing, centered.`,
+        },
+        {
+            id: 'shapeShield',
+            name: 'Shape Shield',
+            hebrewName: 'מגן הצורות',
+            tag: 'defender',
+            drawFn: DEFENDER_SPRITES.shapeShield,
+            role: 'Wall/tank — blocks enemies. Does not attack. Teaches shapes.',
+            prompt: `A cute, friendly shield character for a children's tower defense game (ages 5-6). A silver/grey pointed shield shape (#bdc3c7) with a decorative inner border. On the shield face: a red triangle, a blue circle, a green square, and a yellow star arranged as decorations. Two big friendly eyes peek over the top edge of the shield. Slightly pulses. Style: kawaii, rounded, soft-shaded, child-safe. Transparent background. Front-facing, centered.`,
+        },
+        {
+            id: 'patternPeacock',
+            name: 'Pattern Peacock',
+            hebrewName: 'טווס הדפוסים',
+            tag: 'defender',
+            drawFn: DEFENDER_SPRITES.patternPeacock,
+            role: 'Ranged attacker — shoots pattern projectiles and slows enemies.',
+            prompt: `A cute, friendly peacock character for a children's tower defense game (ages 5-6). Teal/turquoise body (#1abc9c) with a fan of 7 alternating red and blue feathers spreading behind, each feather tipped with a small yellow eye-spot. Round head with big eyes, a small orange beak, and 3 golden crown feathers on top with dots. Small orange feet. Style: kawaii, rounded, soft-shaded, child-safe. Transparent background. Front-facing, centered.`,
+        },
+        {
+            id: 'musicBird',
+            name: 'Music Bird',
+            hebrewName: 'ציפור המוזיקה',
+            tag: 'defender',
+            drawFn: DEFENDER_SPRITES.musicBird,
+            role: 'Area attacker — hits all enemies in a lane. Musical theme.',
+            prompt: `A cute, friendly singing bird character for a children's tower defense game (ages 5-6). Blue body (#3498db) with a lighter blue wing, round head, and big cheerful eyes. An orange beak is open as if singing, with the bottom beak slightly moving. Purple musical notes (♪) float nearby, fading in and out. A darker blue tail feather and small orange feet. Style: kawaii, rounded, soft-shaded, child-safe. Transparent background. Front-facing, centered.`,
+        },
+    ],
+    enemies: [
+        {
+            id: 'muddleCloud',
+            name: 'Muddle Cloud',
+            hebrewName: 'ענן הבלבול',
+            tag: 'enemy',
+            drawFn: ENEMY_SPRITES.muddleCloud,
+            role: 'Basic enemy — slow, low HP. The confused cloud.',
+            prompt: `A cute but slightly mischievous cloud character for a children's tower defense game (ages 5-6). Grey cloud body (#95a5a6) made of overlapping soft circles, with a slightly darker top. Two spiral/dizzy eyes that slowly rotate. A wavy squiggly mouth line. Wobbles and floats gently. Should look confused, not scary. Style: kawaii, rounded, soft-shaded, child-safe, non-threatening. Transparent background. Front-facing, centered.`,
+        },
+        {
+            id: 'messMonster',
+            name: 'Mess Monster',
+            hebrewName: 'מפלצת הבלגן',
+            tag: 'enemy',
+            drawFn: ENEMY_SPRITES.messMonster,
+            role: 'Medium enemy — moderate HP and speed. Paint-splattered troublemaker.',
+            prompt: `A cute, goofy purple monster character for a children's tower defense game (ages 5-6). Oval purple body (#8e44ad) covered in colorful paint splotches (red, yellow, green, blue, orange). Two mismatched eyes (one bigger than the other) giving a goofy look. A wide grin with one visible white tooth. Small stubby arms and round stubby legs. Bounces as it moves. Should look silly, not scary. Style: kawaii, rounded, soft-shaded, child-safe. Transparent background. Front-facing, centered.`,
+        },
+        {
+            id: 'sleepySnail',
+            name: 'Sleepy Snail',
+            hebrewName: 'חילזון הישנוני',
+            tag: 'enemy',
+            drawFn: ENEMY_SPRITES.sleepySnail,
+            role: 'Tank enemy — very high HP, very slow. Always sleeping.',
+            prompt: `A cute, sleepy snail character for a children's tower defense game (ages 5-6). A light brown spiral shell (#d4a574) with visible spiral line pattern, sitting on a light green slug body (#a3d977). The head wears a blue nightcap/sleep cap (#3498db) with a white pom-pom on top. Eyes are closed (simple curved lines showing sleep). Floating "Z z z" letters in light blue nearby. Moves very slowly. Style: kawaii, rounded, soft-shaded, child-safe, peaceful. Transparent background. Side-facing (shell behind, head forward), centered.`,
+        },
+        {
+            id: 'gigglyGremlin',
+            name: 'Giggly Gremlin',
+            hebrewName: 'שדון הצחקוקים',
+            tag: 'enemy',
+            drawFn: ENEMY_SPRITES.gigglyGremlin,
+            role: 'Fast enemy — low HP, very fast. Laughing little imp.',
+            prompt: `A cute, tiny laughing gremlin/imp character for a children's tower defense game (ages 5-6). Small green body (#27ae60) with a slightly lighter green round head (#2ecc71). Pointy elf-like ears sticking out to the sides. Eyes squeezed shut in laughter (V-shaped lines). Wide open red laughing mouth. Small waving stick arms and thin legs. Jitters and hops around energetically. Noticeably smaller than other characters (~70% size). Style: kawaii, rounded, soft-shaded, child-safe, playful. Transparent background. Front-facing, centered.`,
+        },
+        {
+            id: 'bubbleTrouble',
+            name: 'Bubble Trouble',
+            hebrewName: 'בועות הצרות',
+            tag: 'enemy',
+            drawFn: ENEMY_SPRITES.bubbleTrouble,
+            role: 'Flying enemy — floats and skips over the first defender.',
+            prompt: `A cute soap bubble character for a children's tower defense game (ages 5-6). A large translucent/iridescent sphere with rainbow sheen (subtle pink, blue, green reflections). A white shine highlight on the upper-left. Inside the bubble: two round surprised eyes and a small round "O" shaped red mouth giving a surprised expression. Floats gently up and down. Semi-transparent, ethereal look. Style: kawaii, rounded, soft-shaded, child-safe, dreamy. Transparent background. Front-facing, centered.`,
+        },
+        {
+            id: 'kingChaos',
+            name: 'King Chaos',
+            hebrewName: 'מלך הבלגן',
+            tag: 'enemy',
+            drawFn: ENEMY_SPRITES.kingChaos,
+            role: 'Boss enemy — very high HP, spawns Giggly Gremlins when hit.',
+            prompt: `A large, goofy boss monster character for a children's tower defense game (ages 5-6). Big red body (#c0392b) with a lighter red belly patch, about 30% larger than normal characters. Round head with a golden crown (#f1c40f) featuring 3 points and colored jewels (red, blue, green). Comically angry eyebrows (one higher than the other for goofiness). Big eyes and a wide grin showing a row of square white teeth. Thick stubby arms and round feet. Should look imposing but silly, NOT scary. Style: kawaii, rounded, soft-shaded, child-safe. Transparent background. Front-facing, centered.`,
+        },
+    ],
+    projectiles: [
+        {
+            id: 'proj-number',
+            name: 'Number Projectile',
+            tag: 'projectile',
+            role: 'Shot by Number Buddy.',
+            drawCustom: (ctx, x, y, s, t) => drawProjectile(ctx, x, y, s, 'number', '3', t),
+            prompt: `A small blue translucent circle/bubble with a white number inside. Clean, simple game projectile. Style: flat, clean vector look, child-safe.`,
+        },
+        {
+            id: 'proj-letter',
+            name: 'Letter Projectile',
+            tag: 'projectile',
+            role: 'Shot by Letter Lion.',
+            drawCustom: (ctx, x, y, s, t) => drawProjectile(ctx, x, y, s, 'letter', 'א', t),
+            prompt: `A small golden/orange circle with a white Hebrew letter "א" inside. Clean, simple game projectile. Style: flat, clean vector look, child-safe.`,
+        },
+        {
+            id: 'proj-color',
+            name: 'Color Projectile',
+            tag: 'projectile',
+            role: 'Shot by Color Flower.',
+            drawCustom: (ctx, x, y, s, t) => drawProjectile(ctx, x, y, s, 'color', '#e74c3c', t),
+            prompt: `A small irregular paint splash/splat shape in a bright color (red). 8-pointed soft blob shape. Clean, simple game projectile. Style: flat, clean vector look, child-safe.`,
+        },
+        {
+            id: 'proj-pattern',
+            name: 'Pattern Projectile',
+            tag: 'projectile',
+            role: 'Shot by Pattern Peacock.',
+            drawCustom: (ctx, x, y, s, t) => drawProjectile(ctx, x, y, s, 'pattern', null, t),
+            prompt: `Three small circles in a row: red, blue, red — forming a simple pattern. Clean, simple game projectile. Style: flat, clean vector look, child-safe.`,
+        },
+        {
+            id: 'proj-music',
+            name: 'Music Projectile',
+            tag: 'projectile',
+            role: 'Shot by Music Bird.',
+            drawCustom: (ctx, x, y, s, t) => drawProjectile(ctx, x, y, s, 'music', null, t),
+            prompt: `A small purple musical note (♪) — oval note head with a stem and flag. Clean, simple game projectile. Style: flat, clean vector look, child-safe.`,
+        },
+        {
+            id: 'proj-shape',
+            name: 'Shape Projectile',
+            tag: 'projectile',
+            role: 'Shot by Shape Shield (unused).',
+            drawCustom: (ctx, x, y, s, t) => drawProjectile(ctx, x, y, s, 'shape', null, t),
+            prompt: `A small grey circle. Clean, simple game projectile. Style: flat, clean vector look.`,
+        },
+    ],
+    ui: [
+        {
+            id: 'collectStar',
+            name: 'Collect Star (Currency)',
+            tag: 'ui',
+            drawCustom: (ctx, x, y, s, t) => drawCollectStar(ctx, x, y, s * 0.5, t),
+            prompt: `A golden collectible star icon for a children's game. 5-pointed star in bright gold (#f1c40f) with a subtle golden glow/halo behind it. Slightly pulsing. Game currency icon style. Transparent background.`,
+        },
+    ],
+};
+
+// ── Style info for the game's layout ────────────────────────────────────────
+
+const STYLE_NOTE = `
+GAME CONTEXT — Wisdom Defenders (שומרי החוכמה)
+A Hebrew educational tower defense game for preschoolers (ages 5-6), inspired by Plants vs Zombies.
+Canvas: 960×540px. Grid: 3 rows × 6 columns. RTL layout (enemies from left, house on right).
+Cell size: ~117×133px. Characters render at ~82px diameter (CELL_W × 0.35 × 2).
+All art must be: child-safe, kawaii/cute, rounded shapes, non-scary, bright colors, no text reading required.
+`.trim();
+
+// ── Rendering ───────────────────────────────────────────────────────────────
+
+let renderSize = 256;
+let bgColor = 'transparent';
+let animTime = 0;
+let animFrame = null;
+
+function getSize() {
+    return parseInt(document.getElementById('render-size').value);
+}
+
+function getBg() {
+    return document.getElementById('bg-color').value;
+}
+
+function renderSprite(canvas, drawFn, drawCustom, isProjectile = false) {
+    const size = getSize();
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    ctx.clearRect(0, 0, size, size);
+
+    const bg = getBg();
+    if (bg !== 'transparent') {
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, size, size);
+    }
+
+    const cx = size / 2;
+    const cy = size / 2;
+    const spriteSize = size * 0.35;
+
+    if (drawCustom) {
+        drawCustom(ctx, cx, cy, isProjectile ? spriteSize * 0.5 : spriteSize, animTime);
+    } else if (drawFn) {
+        drawFn(ctx, cx, cy, spriteSize, animTime);
+    }
+}
+
+function createCard(character, container) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.id = character.id;
+
+    const tagClass = `tag-${character.tag}`;
+    const tagLabel = character.tag.charAt(0).toUpperCase() + character.tag.slice(1);
+
+    // Header
+    const header = document.createElement('div');
+    header.className = 'card-header';
+    header.innerHTML = `
+        <h3>${character.name}${character.hebrewName ? ` (${character.hebrewName})` : ''}</h3>
+        <span class="tag ${tagClass}">${tagLabel}</span>
+    `;
+    card.appendChild(header);
+
+    // Role
+    if (character.role) {
+        const roleDiv = document.createElement('div');
+        roleDiv.style.cssText = 'padding: 8px 16px; font-size: 12px; color: #8b949e; border-bottom: 1px solid #21262d;';
+        roleDiv.textContent = character.role;
+        card.appendChild(roleDiv);
+    }
+
+    // Canvas row — static + animated
+    const canvasRow = document.createElement('div');
+    canvasRow.className = 'canvas-row';
+
+    const canvasStatic = document.createElement('canvas');
+    canvasStatic.title = 'Static pose (click to download)';
+    const canvasAnim = document.createElement('canvas');
+    canvasAnim.title = 'Animated preview';
+
+    canvasRow.appendChild(canvasStatic);
+    canvasRow.appendChild(canvasAnim);
+    card.appendChild(canvasRow);
+
+    // Store references for animation loop
+    card._canvasStatic = canvasStatic;
+    card._canvasAnim = canvasAnim;
+    card._drawFn = character.drawFn || null;
+    card._drawCustom = character.drawCustom || null;
+    card._isProjectile = character.tag === 'projectile';
+    card._id = character.id;
+
+    // Render static at time=0
+    renderSprite(canvasStatic, card._drawFn, card._drawCustom, card._isProjectile);
+
+    // Size info
+    const sizeInfo = document.createElement('div');
+    sizeInfo.className = 'size-info';
+    sizeInfo.textContent = `In-game: renders at ~82px diameter in a 117×133px cell (CELL_W×0.35 for size param)`;
+    card.appendChild(sizeInfo);
+
+    // Export actions
+    const actions = document.createElement('div');
+    actions.className = 'export-actions';
+    const dlBtn = document.createElement('button');
+    dlBtn.textContent = 'Download PNG';
+    dlBtn.onclick = () => downloadCanvas(canvasStatic, character.id);
+    actions.appendChild(dlBtn);
+
+    const dlAnimBtn = document.createElement('button');
+    dlAnimBtn.textContent = 'Download Current Frame';
+    dlAnimBtn.onclick = () => downloadCanvas(canvasAnim, `${character.id}-frame`);
+    actions.appendChild(dlAnimBtn);
+    card.appendChild(actions);
+
+    // Prompt section
+    const promptSection = document.createElement('div');
+    promptSection.className = 'prompt-section';
+
+    const promptLabel = document.createElement('div');
+    promptLabel.className = 'prompt-label';
+    promptLabel.textContent = 'AI Generation Prompt';
+    promptSection.appendChild(promptLabel);
+
+    const promptBox = document.createElement('div');
+    promptBox.className = 'prompt-box';
+    promptBox.textContent = character.prompt;
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.onclick = () => {
+        navigator.clipboard.writeText(character.prompt).then(() => showToast('Prompt copied!'));
+    };
+    promptBox.appendChild(copyBtn);
+    promptSection.appendChild(promptBox);
+    card.appendChild(promptSection);
+
+    container.appendChild(card);
+    return card;
+}
+
+// ── Build UI ────────────────────────────────────────────────────────────────
+
+const allCards = [];
+
+function buildAll() {
+    const grids = {
+        defenders: document.getElementById('defenders-grid'),
+        enemies: document.getElementById('enemies-grid'),
+        projectiles: document.getElementById('projectiles-grid'),
+        ui: document.getElementById('ui-grid'),
+    };
+
+    for (const [section, chars] of Object.entries(CHARACTERS)) {
+        grids[section].innerHTML = '';
+        for (const c of chars) {
+            const card = createCard(c, grids[section]);
+            allCards.push(card);
+        }
+    }
+}
+
+// ── Animation loop ──────────────────────────────────────────────────────────
+
+function animate() {
+    animTime = performance.now() / 1000;
+    for (const card of allCards) {
+        renderSprite(card._canvasAnim, card._drawFn, card._drawCustom, card._isProjectile);
+    }
+    animFrame = requestAnimationFrame(animate);
+}
+
+// ── Download helpers ────────────────────────────────────────────────────────
+
+function downloadCanvas(canvas, name) {
+    const link = document.createElement('a');
+    link.download = `${name}-${getSize()}px.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast(`Downloaded ${link.download}`);
+}
+
+// Create a high-quality static render for downloads
+function renderForDownload(character) {
+    const size = getSize();
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    const bg = getBg();
+    if (bg !== 'transparent') {
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, size, size);
+    }
+
+    const cx = size / 2;
+    const cy = size / 2;
+    const spriteSize = size * 0.35;
+    const isProjectile = character.tag === 'projectile';
+
+    if (character.drawCustom) {
+        character.drawCustom(ctx, cx, cy, isProjectile ? spriteSize * 0.5 : spriteSize, 0);
+    } else if (character.drawFn) {
+        character.drawFn(ctx, cx, cy, spriteSize, 0);
+    }
+
+    return canvas;
+}
+
+window.downloadAllPNGs = async function() {
+    // Simple sequential download (no zip library dependency)
+    const allChars = [
+        ...CHARACTERS.defenders,
+        ...CHARACTERS.enemies,
+        ...CHARACTERS.projectiles,
+        ...CHARACTERS.ui,
+    ];
+
+    for (const char of allChars) {
+        const canvas = renderForDownload(char);
+        const link = document.createElement('a');
+        link.download = `${char.id}-${getSize()}px.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        // Small delay to prevent browser blocking rapid downloads
+        await new Promise(r => setTimeout(r, 200));
+    }
+    showToast(`Downloaded ${allChars.length} PNGs`);
+};
+
+window.copyAllPrompts = function() {
+    const allChars = [
+        ...CHARACTERS.defenders,
+        ...CHARACTERS.enemies,
+        ...CHARACTERS.projectiles,
+        ...CHARACTERS.ui,
+    ];
+
+    const text = allChars.map(c => {
+        const label = c.hebrewName ? `${c.name} (${c.hebrewName})` : c.name;
+        return `=== ${label} [${c.tag}] ===\n${c.prompt}`;
+    }).join('\n\n');
+
+    const full = `${STYLE_NOTE}\n\n${'='.repeat(60)}\n\n${text}`;
+
+    navigator.clipboard.writeText(full).then(() => showToast('All prompts copied!'));
+};
+
+window.downloadPromptSheet = function() {
+    const allChars = [
+        ...CHARACTERS.defenders,
+        ...CHARACTERS.enemies,
+        ...CHARACTERS.projectiles,
+        ...CHARACTERS.ui,
+    ];
+
+    const text = allChars.map(c => {
+        const label = c.hebrewName ? `${c.name} (${c.hebrewName})` : c.name;
+        return `=== ${label} [${c.tag}] ===\nRole: ${c.role || 'N/A'}\nID: ${c.id}\n\nPrompt:\n${c.prompt}`;
+    }).join('\n\n' + '-'.repeat(60) + '\n\n');
+
+    const full = `WISDOM DEFENDERS — AI Art Generation Prompt Sheet\n${'='.repeat(60)}\n\n${STYLE_NOTE}\n\n${'='.repeat(60)}\n\n${text}`;
+
+    const blob = new Blob([full], { type: 'text/plain' });
+    const link = document.createElement('a');
+    link.download = 'wisdom-defenders-sprite-prompts.txt';
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    showToast('Prompt sheet downloaded!');
+};
+
+window.renderAll = function() {
+    // Re-render static canvases
+    for (const card of allCards) {
+        const saved = animTime;
+        animTime = 0;
+        renderSprite(card._canvasStatic, card._drawFn, card._drawCustom, card._isProjectile);
+        animTime = saved;
+    }
+    showToast('Re-rendered all sprites');
+};
+
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// ── Init ────────────────────────────────────────────────────────────────────
+
+document.getElementById('render-size').addEventListener('change', () => {
+    for (const card of allCards) {
+        animTime = 0;
+        renderSprite(card._canvasStatic, card._drawFn, card._drawCustom, card._isProjectile);
+    }
+});
+
+document.getElementById('bg-color').addEventListener('change', () => {
+    for (const card of allCards) {
+        animTime = 0;
+        renderSprite(card._canvasStatic, card._drawFn, card._drawCustom, card._isProjectile);
+    }
+});
+
+buildAll();
+animate();
+</script>
+
+</body>
+</html>
