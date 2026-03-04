@@ -231,59 +231,48 @@ export function stopBgMusic() {
 
 // ─── Speech Synthesis (Text-to-Speech) ─────────────────────────────────────
 
-let cachedHebrewVoice = null;
-
-/** Score a Hebrew voice — higher is better */
-function scoreVoice(v) {
-    const name = v.name.toLowerCase();
-    let score = 0;
-    // Prefer enhanced/premium/neural variants
-    if (name.includes('enhanced')) score += 40;
-    if (name.includes('premium')) score += 40;
-    if (name.includes('neural')) score += 40;
-    // Google server-side voices tend to sound better
-    if (name.includes('google')) score += 20;
-    // Prefer non-compact (higher quality) Apple voices
-    if (v.voiceURI && !v.voiceURI.includes('compact')) score += 10;
-    // Prefer local voices for lower latency
-    if (v.localService) score += 5;
-    return score;
-}
-
-function pickBestHebrewVoice() {
-    const voices = window.speechSynthesis.getVoices();
-    const hebrewVoices = voices.filter(v => v.lang.startsWith('he'));
-    if (hebrewVoices.length === 0) return null;
-    hebrewVoices.sort((a, b) => scoreVoice(b) - scoreVoice(a));
-    return hebrewVoices[0];
-}
-
-// Chrome loads voices asynchronously — listen for the event
-if (typeof window !== 'undefined' && window.speechSynthesis) {
-    const loadVoices = () => {
-        cachedHebrewVoice = pickBestHebrewVoice();
-    };
-    loadVoices();
-    window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
-}
-
 /** Speak a Hebrew text aloud using the Web Speech API */
+let speakTimer = null;
 export function speak(text) {
     if (!text || !window.speechSynthesis || !speechEnabled) return;
+
+    // Clear any previously scheduled speak
+    if (speakTimer) {
+        clearTimeout(speakTimer);
+        speakTimer = null;
+    }
 
     // Cancel any ongoing speech first
     window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'he-IL';
-    utterance.rate = 0.8;    // slower for young kids
-    utterance.pitch = 1.25;  // higher pitch for warm, friendly tone
+    // Delay after cancel() — all major browsers silently drop a speak()
+    // call that follows cancel() in the same microtask.
+    speakTimer = setTimeout(() => {
+        speakTimer = null;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'he-IL';
+        utterance.rate = 0.8;    // slower for young kids
+        utterance.pitch = 1.25;  // higher pitch for warm, friendly tone
 
-    // Use cached best voice, or pick fresh if not yet loaded
-    const voice = cachedHebrewVoice || pickBestHebrewVoice();
-    if (voice) {
-        utterance.voice = voice;
-    }
+        // Try to find a Hebrew voice
+        const voices = window.speechSynthesis.getVoices();
+        const hebrewVoice = voices.find(v => v.lang.startsWith('he'));
+        if (hebrewVoice) {
+            utterance.voice = hebrewVoice;
+        }
 
-    window.speechSynthesis.speak(utterance);
+        window.speechSynthesis.speak(utterance);
+
+        // Chrome workaround: speech can get permanently paused mid-utterance.
+        // Periodically call resume() to keep it going.
+        const rid = setInterval(() => {
+            if (!window.speechSynthesis.speaking) {
+                clearInterval(rid);
+            } else {
+                window.speechSynthesis.resume();
+            }
+        }, 5000);
+        utterance.onend = () => clearInterval(rid);
+        utterance.onerror = () => clearInterval(rid);
+    }, 50);
 }
