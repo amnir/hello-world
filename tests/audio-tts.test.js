@@ -89,8 +89,8 @@ describe('speak (TTS)', () => {
         vi.advanceTimersByTime(50);
         const utterance = mockSpeak.mock.calls[0][0];
         expect(utterance.lang).toBe('he-IL');
-        expect(utterance.rate).toBe(0.85);
-        expect(utterance.pitch).toBe(1.1);
+        expect(utterance.rate).toBe(0.8);
+        expect(utterance.pitch).toBe(1.25);
     });
 
     it('debounces rapid calls — only the last text is spoken', () => {

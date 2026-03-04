@@ -251,8 +251,8 @@ export function speak(text) {
         speakTimer = null;
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'he-IL';
-        utterance.rate = 0.85;   // slightly slower for kids
-        utterance.pitch = 1.1;   // slightly higher pitch for friendly tone
+        utterance.rate = 0.8;    // slower for young kids
+        utterance.pitch = 1.25;  // higher pitch for warm, friendly tone
 
         // Try to find a Hebrew voice
         const voices = window.speechSynthesis.getVoices();
