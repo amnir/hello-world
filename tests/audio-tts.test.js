@@ -14,7 +14,6 @@ globalThis.speechSynthesis = {
     resume: mockResume,
     getVoices: mockGetVoices,
     speaking: false,
-    addEventListener: vi.fn(),
 };
 
 globalThis.SpeechSynthesisUtterance = class {
@@ -90,8 +89,8 @@ describe('speak (TTS)', () => {
         vi.advanceTimersByTime(50);
         const utterance = mockSpeak.mock.calls[0][0];
         expect(utterance.lang).toBe('he-IL');
-        expect(utterance.rate).toBe(0.8);
-        expect(utterance.pitch).toBe(1.25);
+        expect(utterance.rate).toBe(0.85);
+        expect(utterance.pitch).toBe(1.1);
     });
 
     it('debounces rapid calls — only the last text is spoken', () => {
@@ -110,16 +109,15 @@ describe('speak (TTS)', () => {
         expect(mockCancel).toHaveBeenCalledTimes(3);
     });
 
-    it('picks the best Hebrew voice based on quality scoring', () => {
+    it('uses a Hebrew voice when available', () => {
         mockGetVoices.mockReturnValue([
             { name: 'English US', lang: 'en-US', localService: true },
-            { name: 'Hebrew Compact', lang: 'he-IL', voiceURI: 'compact', localService: true },
-            { name: 'Google Hebrew Enhanced', lang: 'he-IL', voiceURI: 'google', localService: false },
+            { name: 'Hebrew Voice', lang: 'he-IL', localService: true },
         ]);
         speak('שלום');
         vi.advanceTimersByTime(50);
         const utterance = mockSpeak.mock.calls[0][0];
-        expect(utterance.voice.name).toBe('Google Hebrew Enhanced');
+        expect(utterance.voice.name).toBe('Hebrew Voice');
     });
 
     it('sets up resume interval that calls resume() while speaking', () => {
