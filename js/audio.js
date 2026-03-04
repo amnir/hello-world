@@ -268,22 +268,46 @@ if (typeof window !== 'undefined' && window.speechSynthesis) {
 }
 
 /** Speak a Hebrew text aloud using the Web Speech API */
+let speakTimer = null;
 export function speak(text) {
     if (!text || !window.speechSynthesis || !speechEnabled) return;
+
+    // Clear any previously scheduled speak
+    if (speakTimer) {
+        clearTimeout(speakTimer);
+        speakTimer = null;
+    }
 
     // Cancel any ongoing speech first
     window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'he-IL';
-    utterance.rate = 0.8;    // slower for young kids
-    utterance.pitch = 1.25;  // higher pitch for warm, friendly tone
+    // Delay after cancel() — all major browsers silently drop a speak()
+    // call that follows cancel() in the same microtask.
+    speakTimer = setTimeout(() => {
+        speakTimer = null;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'he-IL';
+        utterance.rate = 0.8;    // slower for young kids
+        utterance.pitch = 1.25;  // higher pitch for warm, friendly tone
 
-    // Use cached best voice, or pick fresh if not yet loaded
-    const voice = cachedHebrewVoice || pickBestHebrewVoice();
-    if (voice) {
-        utterance.voice = voice;
-    }
+        // Use cached best voice, or pick fresh if not yet loaded
+        const voice = cachedHebrewVoice || pickBestHebrewVoice();
+        if (voice) {
+            utterance.voice = voice;
+        }
 
-    window.speechSynthesis.speak(utterance);
+        window.speechSynthesis.speak(utterance);
+
+        // Chrome workaround: speech can get permanently paused mid-utterance.
+        // Periodically call resume() to keep it going.
+        const rid = setInterval(() => {
+            if (!window.speechSynthesis.speaking) {
+                clearInterval(rid);
+            } else {
+                window.speechSynthesis.resume();
+            }
+        }, 5000);
+        utterance.onend = () => clearInterval(rid);
+        utterance.onerror = () => clearInterval(rid);
+    }, 50);
 }
