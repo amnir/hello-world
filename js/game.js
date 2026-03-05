@@ -3397,6 +3397,7 @@ Promise.all([
     .then(() => new Game(canvas))
     .catch((err) => {
         console.error('Fatal: Game failed to initialize', err);
+        const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
         ctx.fillStyle = '#2c3e50';
         ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
