@@ -1,5 +1,5 @@
 // Bump version to force re-cache when files change
-const CACHE_NAME = 'wisdom-defenders-v6';
+const CACHE_NAME = 'wisdom-defenders-v7';
 const CORE_ASSETS = [
     './',
     './index.html',
