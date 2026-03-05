@@ -17,7 +17,7 @@ import {
     getSfxEnabled, getMusicEnabled, getSpeechEnabled,
 } from './audio.js';
 
-import { loadDefenderImages } from './assets.js';
+import { loadDefenderImages, loadEnemyImages } from './assets.js';
 import { DEFENDER_DEFS, ENEMY_DEFS, LEVELS } from './levels.js';
 import { generateChallenge } from './challenges.js';
 import { Tutorial } from './tutorial.js';
@@ -3388,7 +3388,10 @@ function drawLoadingScreen(progress) {
 }
 
 drawLoadingScreen(0);
-loadDefenderImages((loaded, total) => drawLoadingScreen(loaded / total))
+Promise.all([
+    loadDefenderImages((loaded, total) => drawLoadingScreen(loaded / (total * 2))),
+    loadEnemyImages((loaded, total) => drawLoadingScreen(0.5 + loaded / (total * 2))),
+])
     .catch((err) => console.warn('Image preload failed, using procedural sprites:', err))
     .then(() => new Game(canvas))
     .catch((err) => console.error('Fatal: Game failed to initialize', err));

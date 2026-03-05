@@ -6,11 +6,27 @@
 //   time = elapsed time in seconds (for animations)
 // =============================================================================
 
-import { getDefenderImage } from './assets.js';
+import { getDefenderImage, getEnemyImage } from './assets.js';
 
 function withImage(typeName, proceduralFn, transformFn) {
     return (ctx, x, y, size, time) => {
         const img = getDefenderImage(typeName);
+        if (!img) return proceduralFn(ctx, x, y, size, time);
+        ctx.save();
+        try {
+            ctx.translate(x, y);
+            if (transformFn) transformFn(ctx, time);
+            const s = size * 2.8;
+            ctx.drawImage(img, -s / 2, -s / 2, s, s);
+        } finally {
+            ctx.restore();
+        }
+    };
+}
+
+function withEnemyImage(typeName, proceduralFn, transformFn) {
+    return (ctx, x, y, size, time) => {
+        const img = getEnemyImage(typeName);
         if (!img) return proceduralFn(ctx, x, y, size, time);
         ctx.save();
         try {
@@ -1616,10 +1632,10 @@ export const DEFENDER_SPRITES = {
 };
 
 export const ENEMY_SPRITES = {
-    muddleCloud: drawMuddleCloud,
-    messMonster: drawMessMonster,
-    sleepySnail: drawSleepySnail,
-    gigglyGremlin: drawGigglyGremlin,
-    bubbleTrouble: drawBubbleTrouble,
-    kingChaos: drawKingChaos,
+    muddleCloud:   withEnemyImage('muddleCloud', drawMuddleCloud, (ctx, t) => ctx.translate(0, Math.sin(t * 2) * 2)),
+    messMonster:   withEnemyImage('messMonster', drawMessMonster, (ctx, t) => ctx.translate(0, Math.sin(t * 1.5) * 1.5)),
+    sleepySnail:   withEnemyImage('sleepySnail', drawSleepySnail, (ctx, t) => ctx.translate(0, Math.sin(t * 0.8) * 1)),
+    gigglyGremlin: withEnemyImage('gigglyGremlin', drawGigglyGremlin, (ctx, t) => ctx.translate(0, Math.sin(t * 4) * 3)),
+    bubbleTrouble: withEnemyImage('bubbleTrouble', drawBubbleTrouble, (ctx, t) => ctx.translate(0, Math.sin(t * 2.5) * 3)),
+    kingChaos:     withEnemyImage('kingChaos', drawKingChaos, (ctx, t) => ctx.scale(1 + Math.sin(t * 1.5) * 0.03, 1 + Math.sin(t * 1.5) * 0.03)),
 };
