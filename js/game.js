@@ -31,7 +31,7 @@ import {
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 // Font stack: Segoe UI for Windows, system-ui for modern browsers, fallback chain
-const F = '"Segoe UI", "Trebuchet MS", system-ui, sans-serif';
+const F = 'Rubik, "Segoe UI", "Trebuchet MS", system-ui, sans-serif';
 
 const HOUSE_X = GRID_RIGHT;
 const HOUSE_W = CANVAS_W - GRID_RIGHT;
@@ -1811,10 +1811,14 @@ class Game {
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-        // Gold decorative border
+        // Gold decorative double border
         ctx.strokeStyle = '#f1c40f';
-        ctx.lineWidth = 4;
-        this.roundRect(ctx, 15, 15, CANVAS_W - 30, CANVAS_H - 30, 16);
+        ctx.lineWidth = 5;
+        this.roundRect(ctx, 12, 12, CANVAS_W - 24, CANVAS_H - 24, 16);
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(241, 196, 15, 0.4)';
+        ctx.lineWidth = 2;
+        this.roundRect(ctx, 19, 19, CANVAS_W - 38, CANVAS_H - 38, 13);
         ctx.stroke();
 
         // Title
@@ -2193,15 +2197,30 @@ class Game {
     renderHUD() {
         const ctx = this.ctx;
 
-        // HUD background with gradient
+        // HUD background with rich gradient
         const hudGrad = ctx.createLinearGradient(0, 0, 0, HUD_HEIGHT);
-        hudGrad.addColorStop(0, 'rgba(52, 73, 94, 0.9)');
-        hudGrad.addColorStop(1, 'rgba(36, 52, 68, 0.88)');
+        hudGrad.addColorStop(0, 'rgba(25, 40, 60, 0.95)');
+        hudGrad.addColorStop(0.5, 'rgba(35, 55, 78, 0.93)');
+        hudGrad.addColorStop(1, 'rgba(22, 35, 52, 0.96)');
         ctx.fillStyle = hudGrad;
         ctx.fillRect(0, 0, CANVAS_W, HUD_HEIGHT);
-        // Thin highlight line at bottom edge
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
-        ctx.lineWidth = 1;
+
+        // Glass shine at top
+        const shineGrad = ctx.createLinearGradient(0, 0, 0, HUD_HEIGHT * 0.35);
+        shineGrad.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
+        shineGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = shineGrad;
+        ctx.fillRect(0, 0, CANVAS_W, HUD_HEIGHT * 0.35);
+
+        // Glowing bottom edge
+        ctx.strokeStyle = 'rgba(52, 152, 219, 0.45)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, HUD_HEIGHT);
+        ctx.lineTo(CANVAS_W, HUD_HEIGHT);
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(52, 152, 219, 0.12)';
+        ctx.lineWidth = 6;
         ctx.beginPath();
         ctx.moveTo(0, HUD_HEIGHT);
         ctx.lineTo(CANVAS_W, HUD_HEIGHT);
@@ -2353,9 +2372,8 @@ class Game {
     renderChallenge() {
         const ctx = this.ctx;
 
-        // Dim background
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        // Cinematic overlay
+        this.drawOverlay(ctx);
 
         // Challenge popup box
         const popW = CANVAS_W * 0.6;
@@ -2363,29 +2381,7 @@ class Game {
         const popX = (CANVAS_W - popW) / 2;
         const popY = (CANVAS_H - popH) / 2;
 
-        // Drop shadow behind dialog
-        ctx.save();
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-        ctx.shadowBlur = 20;
-        ctx.shadowOffsetY = 5;
-        // Gradient background
-        const popGrad = ctx.createLinearGradient(popX, popY, popX, popY + popH);
-        popGrad.addColorStop(0, '#ffffff');
-        popGrad.addColorStop(1, '#f0f0f0');
-        ctx.fillStyle = popGrad;
-        this.roundRect(ctx, popX, popY, popW, popH, 20);
-        ctx.fill();
-        ctx.restore();
-        // Border
-        ctx.strokeStyle = '#3498db';
-        ctx.lineWidth = 4;
-        this.roundRect(ctx, popX, popY, popW, popH, 20);
-        ctx.stroke();
-        // Inner highlight border
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-        ctx.lineWidth = 2;
-        this.roundRect(ctx, popX + 3, popY + 3, popW - 6, popH - 6, 18);
-        ctx.stroke();
+        this.drawPanel(ctx, popX, popY, popW, popH, '#3498db');
 
         // Render the challenge content
         if (this.activeChallenge) {
@@ -2412,21 +2408,44 @@ class Game {
             const btnY = popY + btnMargin;
             this.speakerBtnArea = { x: btnX, y: btnY, w: btnSize, h: btnSize };
 
-            // Button background — rounded circle
+            // 3D speaker button
             const cx = btnX + btnSize / 2;
             const cy = btnY + btnSize / 2;
             const r = btnSize / 2;
 
             ctx.save();
+            // Shadow
+            ctx.shadowColor = this.speakerBtnHover ? 'rgba(52,152,219,0.5)' : 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = this.speakerBtnHover ? 12 : 6;
+            ctx.shadowOffsetY = 3;
+
+            // 3D base (dark ring underneath)
+            ctx.beginPath();
+            ctx.arc(cx, cy + 3, r, 0, Math.PI * 2);
+            ctx.fillStyle = '#1a5276';
+            ctx.fill();
+
+            ctx.shadowColor = 'transparent';
+
+            // Main face gradient
+            const btnGrad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, 0, cx, cy, r);
+            btnGrad.addColorStop(0, this.speakerBtnHover ? '#5dade2' : '#5cb3e8');
+            btnGrad.addColorStop(0.7, this.speakerBtnHover ? '#2980b9' : '#3498db');
+            btnGrad.addColorStop(1, '#1a6fa0');
             ctx.beginPath();
             ctx.arc(cx, cy, r, 0, Math.PI * 2);
-            ctx.fillStyle = this.speakerBtnHover ? '#2980b9' : '#3498db';
+            ctx.fillStyle = btnGrad;
             ctx.fill();
-            if (this.speakerBtnHover) {
-                ctx.shadowColor = 'rgba(52, 152, 219, 0.5)';
-                ctx.shadowBlur = 10;
-            }
-            ctx.strokeStyle = '#2471a3';
+
+            // Border
+            ctx.strokeStyle = '#1a5276';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // Glossy top highlight
+            ctx.beginPath();
+            ctx.arc(cx, cy - r * 0.15, r * 0.75, Math.PI * 1.15, Math.PI * 1.85);
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
             ctx.lineWidth = 2;
             ctx.stroke();
             ctx.restore();
@@ -2521,9 +2540,8 @@ class Game {
     renderPaused() {
         const ctx = this.ctx;
 
-        // Dim the game field
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        // Cinematic overlay
+        this.drawOverlay(ctx);
 
         // Pause box
         const boxW = 340;
@@ -2531,25 +2549,7 @@ class Game {
         const boxX = (CANVAS_W - boxW) / 2;
         const boxY = (CANVAS_H - boxH) / 2;
 
-        ctx.save();
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-        ctx.shadowBlur = 20;
-        ctx.shadowOffsetY = 5;
-        const pauseGrad = ctx.createLinearGradient(boxX, boxY, boxX, boxY + boxH);
-        pauseGrad.addColorStop(0, '#ffffff');
-        pauseGrad.addColorStop(1, '#f0f0f0');
-        ctx.fillStyle = pauseGrad;
-        this.roundRect(ctx, boxX, boxY, boxW, boxH, 24);
-        ctx.fill();
-        ctx.restore();
-        ctx.strokeStyle = '#3498db';
-        ctx.lineWidth = 4;
-        this.roundRect(ctx, boxX, boxY, boxW, boxH, 24);
-        ctx.stroke();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-        ctx.lineWidth = 2;
-        this.roundRect(ctx, boxX + 3, boxY + 3, boxW - 6, boxH - 6, 22);
-        ctx.stroke();
+        this.drawPanel(ctx, boxX, boxY, boxW, boxH, '#3498db');
 
         // Title
         ctx.font = `bold 42px ${F}`;
@@ -2588,9 +2588,8 @@ class Game {
     renderLevelWon() {
         const ctx = this.ctx;
 
-        // Overlay
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        // Cinematic overlay
+        this.drawOverlay(ctx);
 
         // Celebration box
         const boxW = 400;
@@ -2598,25 +2597,7 @@ class Game {
         const boxX = (CANVAS_W - boxW) / 2;
         const boxY = (CANVAS_H - boxH) / 2;
 
-        ctx.save();
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-        ctx.shadowBlur = 20;
-        ctx.shadowOffsetY = 5;
-        const wonGrad = ctx.createLinearGradient(boxX, boxY, boxX, boxY + boxH);
-        wonGrad.addColorStop(0, '#fffef5');
-        wonGrad.addColorStop(1, '#f0ece0');
-        ctx.fillStyle = wonGrad;
-        this.roundRect(ctx, boxX, boxY, boxW, boxH, 20);
-        ctx.fill();
-        ctx.restore();
-        ctx.strokeStyle = '#f1c40f';
-        ctx.lineWidth = 4;
-        this.roundRect(ctx, boxX, boxY, boxW, boxH, 20);
-        ctx.stroke();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-        ctx.lineWidth = 2;
-        this.roundRect(ctx, boxX + 3, boxY + 3, boxW - 6, boxH - 6, 18);
-        ctx.stroke();
+        this.drawPanel(ctx, boxX, boxY, boxW, boxH, '#f1c40f', '#fffef5', '#f0ece0');
 
         // Title
         ctx.font = `bold 42px ${F}`;
@@ -2649,9 +2630,8 @@ class Game {
     renderLevelLost() {
         const ctx = this.ctx;
 
-        // Overlay
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        // Cinematic overlay
+        this.drawOverlay(ctx);
 
         // Box
         const boxW = 380;
@@ -2659,25 +2639,7 @@ class Game {
         const boxX = (CANVAS_W - boxW) / 2;
         const boxY = (CANVAS_H - boxH) / 2;
 
-        ctx.save();
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-        ctx.shadowBlur = 20;
-        ctx.shadowOffsetY = 5;
-        const lostGrad = ctx.createLinearGradient(boxX, boxY, boxX, boxY + boxH);
-        lostGrad.addColorStop(0, '#ffffff');
-        lostGrad.addColorStop(1, '#f0f0f0');
-        ctx.fillStyle = lostGrad;
-        this.roundRect(ctx, boxX, boxY, boxW, boxH, 20);
-        ctx.fill();
-        ctx.restore();
-        ctx.strokeStyle = '#e67e22';
-        ctx.lineWidth = 4;
-        this.roundRect(ctx, boxX, boxY, boxW, boxH, 20);
-        ctx.stroke();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-        ctx.lineWidth = 2;
-        this.roundRect(ctx, boxX + 3, boxY + 3, boxW - 6, boxH - 6, 18);
-        ctx.stroke();
+        this.drawPanel(ctx, boxX, boxY, boxW, boxH, '#e67e22');
 
         // Encouraging message
         ctx.font = `bold 36px ${F}`;
@@ -2790,18 +2752,7 @@ class Game {
         const boxX = (CANVAS_W - boxW) / 2;
         const boxY = (CANVAS_H - boxH) / 2;
 
-        ctx.save();
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-        ctx.shadowBlur = 20;
-        ctx.shadowOffsetY = 5;
-        ctx.fillStyle = '#fff';
-        this.roundRect(ctx, boxX, boxY, boxW, boxH, 24);
-        ctx.fill();
-        ctx.restore();
-        ctx.strokeStyle = '#3498db';
-        ctx.lineWidth = 4;
-        this.roundRect(ctx, boxX, boxY, boxW, boxH, 24);
-        ctx.stroke();
+        this.drawPanel(ctx, boxX, boxY, boxW, boxH, '#3498db');
 
         // Title
         ctx.font = `bold 36px ${F}`;
@@ -2828,26 +2779,55 @@ class Game {
             ctx.textBaseline = 'middle';
             ctx.fillText(t.label, boxX + boxW - 40, t.y + toggleH / 2);
 
-            // Toggle track
+            // Toggle track with inset shadow
+            ctx.save();
+            ctx.shadowColor = 'rgba(0,0,0,0.2)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetY = 2;
             const trackColor = t.enabled ? '#2ecc71' : '#bdc3c7';
             ctx.fillStyle = trackColor;
             this.roundRect(ctx, toggleX, t.y, toggleW, toggleH, toggleH / 2);
             ctx.fill();
-            ctx.strokeStyle = t.enabled ? '#27ae60' : '#95a5a6';
+            ctx.restore();
+            ctx.strokeStyle = t.enabled ? '#1e8449' : '#7f8c8d';
             ctx.lineWidth = 2;
             this.roundRect(ctx, toggleX, t.y, toggleW, toggleH, toggleH / 2);
             ctx.stroke();
 
-            // Toggle knob
-            const knobR = toggleH / 2 - 4;
-            const knobX = t.enabled ? toggleX + toggleW - knobR - 6 : toggleX + knobR + 6;
+            // Track inset gradient
+            ctx.save();
+            this.roundRect(ctx, toggleX, t.y, toggleW, toggleH, toggleH / 2);
+            ctx.clip();
+            const insetGrad = ctx.createLinearGradient(toggleX, t.y, toggleX, t.y + toggleH * 0.4);
+            insetGrad.addColorStop(0, 'rgba(0,0,0,0.15)');
+            insetGrad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = insetGrad;
+            ctx.fillRect(toggleX, t.y, toggleW, toggleH * 0.4);
+            ctx.restore();
+
+            // 3D toggle knob with gradient and shadow
+            const knobR = toggleH / 2 - 3;
+            const knobX = t.enabled ? toggleX + toggleW - knobR - 5 : toggleX + knobR + 5;
             const knobY = t.y + toggleH / 2;
-            ctx.fillStyle = '#fff';
+            ctx.save();
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetY = 2;
+            const knobGrad = ctx.createRadialGradient(
+                knobX - knobR * 0.3, knobY - knobR * 0.3, 0,
+                knobX, knobY, knobR
+            );
+            knobGrad.addColorStop(0, '#ffffff');
+            knobGrad.addColorStop(1, '#dcdcdc');
+            ctx.fillStyle = knobGrad;
             ctx.beginPath();
             ctx.arc(knobX, knobY, knobR, 0, Math.PI * 2);
             ctx.fill();
-            ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-            ctx.lineWidth = 1;
+            ctx.restore();
+            ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(knobX, knobY, knobR, 0, Math.PI * 2);
             ctx.stroke();
         }
 
@@ -2922,10 +2902,11 @@ class Game {
     // ─── Text Effects ──────────────────────────────────────────────────
 
     /** Draw text with outline + fill — great for readability over any background */
-    drawOutlinedText(ctx, text, x, y, fillColor, strokeColor = '#000', lineW = 3) {
+    drawOutlinedText(ctx, text, x, y, fillColor, strokeColor = '#000', lineW = 4) {
         ctx.strokeStyle = strokeColor;
         ctx.lineWidth = lineW;
         ctx.lineJoin = 'round';
+        ctx.miterLimit = 2;
         ctx.strokeText(text, x, y);
         ctx.fillStyle = fillColor;
         ctx.fillText(text, x, y);
@@ -2938,11 +2919,13 @@ class Game {
         ctx.shadowBlur = glowBlur;
         ctx.fillStyle = fillColor;
         ctx.fillText(text, x, y);
-        ctx.fillText(text, x, y); // double-draw for stronger glow
+        ctx.fillText(text, x, y);
+        ctx.fillText(text, x, y); // triple-draw for intense glow
         ctx.restore();
-        ctx.strokeStyle = this.darkenColor(fillColor, 30);
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = this.darkenColor(fillColor, 35);
+        ctx.lineWidth = 3;
         ctx.lineJoin = 'round';
+        ctx.miterLimit = 2;
         ctx.strokeText(text, x, y);
         ctx.fillStyle = fillColor;
         ctx.fillText(text, x, y);
@@ -3129,37 +3112,139 @@ class Game {
      */
     drawButton(ctx, x, y, w, h, r, baseColor, borderColor) {
         ctx.save();
-        // Drop shadow
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
-        ctx.shadowBlur = 6;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 3;
+        const shelf = Math.min(5, Math.round(h * 0.09));
 
-        // Gradient fill (lighter top → darker bottom)
-        const grad = ctx.createLinearGradient(x, y, x, y + h);
-        grad.addColorStop(0, this.lightenColor(baseColor, 20));
-        grad.addColorStop(1, this.darkenColor(baseColor, 15));
+        // Deep drop shadow
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetY = 4;
+
+        // 3D shelf (darker bottom edge that peeks below the face)
+        ctx.fillStyle = this.darkenColor(baseColor, 35);
+        this.roundRect(ctx, x, y, w, h, r);
+        ctx.fill();
+
+        // Clear shadow for face draws
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+
+        // Main face with rich multi-stop gradient
+        const faceH = h - shelf;
+        const grad = ctx.createLinearGradient(x, y, x, y + faceH);
+        grad.addColorStop(0, this.lightenColor(baseColor, 28));
+        grad.addColorStop(0.45, this.lightenColor(baseColor, 5));
+        grad.addColorStop(0.55, baseColor);
+        grad.addColorStop(1, this.darkenColor(baseColor, 12));
         ctx.fillStyle = grad;
+        this.roundRect(ctx, x, y, w, faceH, r);
+        ctx.fill();
+
+        // Glossy top shine (top 42% of face)
+        ctx.save();
+        this.roundRect(ctx, x, y, w, faceH, r);
+        ctx.clip();
+        const glossH = faceH * 0.42;
+        const gloss = ctx.createLinearGradient(x, y, x, y + glossH);
+        gloss.addColorStop(0, 'rgba(255, 255, 255, 0.38)');
+        gloss.addColorStop(0.6, 'rgba(255, 255, 255, 0.1)');
+        gloss.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = gloss;
+        ctx.fillRect(x, y, w, glossH);
+        ctx.restore();
+
+        // Outer border
+        ctx.strokeStyle = borderColor || this.darkenColor(baseColor, 30);
+        ctx.lineWidth = 2.5;
+        this.roundRect(ctx, x, y, w, h, r);
+        ctx.stroke();
+
+        // Inner top highlight
+        ctx.beginPath();
+        ctx.moveTo(x + r + 3, y + 2.5);
+        ctx.lineTo(x + w - r - 3, y + 2.5);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+
+        // Face-shelf transition line
+        ctx.beginPath();
+        ctx.moveTo(x + r + 3, y + faceH - 0.5);
+        ctx.lineTo(x + w - r - 3, y + faceH - 0.5);
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    /** Draw a cinematic spotlight overlay for modal backgrounds */
+    drawOverlay(ctx) {
+        const g = ctx.createRadialGradient(
+            CANVAS_W / 2, CANVAS_H / 2, CANVAS_H * 0.15,
+            CANVAS_W / 2, CANVAS_H / 2, CANVAS_W * 0.75
+        );
+        g.addColorStop(0, 'rgba(0, 0, 0, 0.35)');
+        g.addColorStop(1, 'rgba(0, 0, 0, 0.72)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    }
+
+    /** Draw a premium modal panel with ornamental borders and corner diamonds */
+    drawPanel(ctx, x, y, w, h, borderColor, bgTop = '#ffffff', bgBottom = '#f0ece0') {
+        const r = 20;
+
+        ctx.save();
+        // Deep colored shadow
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+        ctx.shadowBlur = 35;
+        ctx.shadowOffsetY = 10;
+
+        // Background gradient
+        const bgGrad = ctx.createLinearGradient(x, y, x, y + h);
+        bgGrad.addColorStop(0, bgTop);
+        bgGrad.addColorStop(1, bgBottom);
+        ctx.fillStyle = bgGrad;
         this.roundRect(ctx, x, y, w, h, r);
         ctx.fill();
         ctx.restore();
 
-        // Border
-        ctx.strokeStyle = borderColor || this.darkenColor(baseColor, 25);
-        ctx.lineWidth = 2;
+        // Thick outer border
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = 5;
         this.roundRect(ctx, x, y, w, h, r);
         ctx.stroke();
 
-        // Inner highlight line at top
-        ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(x + r + 2, y + 2);
-        ctx.lineTo(x + w - r - 2, y + 2);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
-        ctx.lineWidth = 1;
-        ctx.lineCap = 'round';
+        // Inner decorative border (creates double-border look)
+        ctx.strokeStyle = this.lightenColor(borderColor, 30);
+        ctx.lineWidth = 2;
+        this.roundRect(ctx, x + 7, y + 7, w - 14, h - 14, r - 3);
         ctx.stroke();
-        ctx.restore();
+
+        // White inner glow line
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 1.5;
+        this.roundRect(ctx, x + 3, y + 3, w - 6, h - 6, r - 1);
+        ctx.stroke();
+
+        // Corner diamond ornaments
+        const d = 5;
+        const off = 15;
+        const corners = [
+            [x + off, y + off], [x + w - off, y + off],
+            [x + off, y + h - off], [x + w - off, y + h - off],
+        ];
+        ctx.fillStyle = borderColor;
+        for (const [cx, cy] of corners) {
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - d);
+            ctx.lineTo(cx + d, cy);
+            ctx.lineTo(cx, cy + d);
+            ctx.lineTo(cx - d, cy);
+            ctx.closePath();
+            ctx.fill();
+        }
     }
 
     _expandHex(hex) {
