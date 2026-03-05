@@ -1495,15 +1495,17 @@ function drawChallengeButton(ctx, x, y, w, h, r, color, borderColor, isHover) {
 
     // Face
     const faceH = h - shelf;
-    const hoverColor = isHover ? lightenColor(color, 10) : color;
+    const topPct = isHover ? 32 : 22;
+    const midPct = isHover ? 10 : 0;
+    const botPct = isHover ? 0 : 8;
     const grad = ctx.createLinearGradient?.(x, y, x, y + faceH);
     if (grad) {
-        grad.addColorStop(0, lightenColor(hoverColor, 22));
-        grad.addColorStop(0.5, hoverColor);
-        grad.addColorStop(1, darkenColor(hoverColor, 8));
+        grad.addColorStop(0, lightenColor(color, topPct));
+        grad.addColorStop(0.5, midPct > 0 ? lightenColor(color, midPct) : color);
+        grad.addColorStop(1, botPct > 0 ? darkenColor(color, botPct) : color);
         ctx.fillStyle = grad;
     } else {
-        ctx.fillStyle = hoverColor;
+        ctx.fillStyle = color;
     }
     roundRect(ctx, x, y, w, faceH, r);
     ctx.fill();
