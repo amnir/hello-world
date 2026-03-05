@@ -1,5 +1,5 @@
 // Bump version to force re-cache when files change
-const CACHE_NAME = 'wisdom-defenders-v5';
+const CACHE_NAME = 'wisdom-defenders-v6';
 const CORE_ASSETS = [
     './',
     './index.html',
@@ -25,6 +25,12 @@ const IMAGE_ASSETS = [
     './assets/defenders/star-maker.png',
     './assets/defenders/pattern-peacock.png',
     './assets/defenders/music-bird.png',
+    './assets/enemies/muddle-cloud.png',
+    './assets/enemies/mess-monster.png',
+    './assets/enemies/sleepy-snail.png',
+    './assets/enemies/giggly-gremlin.png',
+    './assets/enemies/bubble-trouble.png',
+    './assets/enemies/king-chaos.png',
 ];
 
 // Install: cache core assets (required), then best-effort cache images

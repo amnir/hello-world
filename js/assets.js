@@ -1,5 +1,5 @@
 // =============================================================================
-// assets.js — Image loader and cache for defender sprites
+// assets.js — Image loader and cache for character sprites
 // =============================================================================
 
 const DEFENDER_IMAGES = {
@@ -12,14 +12,27 @@ const DEFENDER_IMAGES = {
     musicBird:      'assets/defenders/music-bird.png',
 };
 
+const ENEMY_IMAGES = {
+    muddleCloud:   'assets/enemies/muddle-cloud.png',
+    messMonster:   'assets/enemies/mess-monster.png',
+    sleepySnail:   'assets/enemies/sleepy-snail.png',
+    gigglyGremlin: 'assets/enemies/giggly-gremlin.png',
+    bubbleTrouble: 'assets/enemies/bubble-trouble.png',
+    kingChaos:     'assets/enemies/king-chaos.png',
+};
+
 const cache = {};
 
 export function getDefenderImage(typeName) {
     return cache[typeName] || null;
 }
 
-export function loadDefenderImages(onProgress) {
-    const entries = Object.entries(DEFENDER_IMAGES);
+export function getEnemyImage(typeName) {
+    return cache[typeName] || null;
+}
+
+function loadImageSet(images, label, onProgress) {
+    const entries = Object.entries(images);
     let loaded = 0;
 
     function done() {
@@ -36,11 +49,19 @@ export function loadDefenderImages(onProgress) {
                 resolve();
             };
             img.onerror = () => {
-                console.warn(`Failed to load defender image: ${name} (${src})`);
+                console.warn(`Failed to load ${label} image: ${name} (${src})`);
                 done();
                 resolve();
             };
             img.src = src;
         });
     }));
+}
+
+export function loadDefenderImages(onProgress) {
+    return loadImageSet(DEFENDER_IMAGES, 'defender', onProgress);
+}
+
+export function loadEnemyImages(onProgress) {
+    return loadImageSet(ENEMY_IMAGES, 'enemy', onProgress);
 }
