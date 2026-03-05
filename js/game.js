@@ -3394,6 +3394,17 @@ Promise.all([
     loadDefenderImages(() => drawLoadingScreen(++totalLoaded / totalImages)),
     loadEnemyImages(() => drawLoadingScreen(++totalLoaded / totalImages)),
 ])
-    .catch((err) => console.warn('Image preload failed, using procedural sprites:', err))
     .then(() => new Game(canvas))
-    .catch((err) => console.error('Fatal: Game failed to initialize', err));
+    .catch((err) => {
+        console.error('Fatal: Game failed to initialize', err);
+        ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+        ctx.fillStyle = '#2c3e50';
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        ctx.fillStyle = '#e74c3c';
+        ctx.font = 'bold 28px Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('שגיאה בטעינת המשחק', CANVAS_W / 2, CANVAS_H / 2 - 20);
+        ctx.fillStyle = '#bdc3c7';
+        ctx.font = '18px Arial, sans-serif';
+        ctx.fillText('נסו לרענן את הדף', CANVAS_W / 2, CANVAS_H / 2 + 20);
+    });

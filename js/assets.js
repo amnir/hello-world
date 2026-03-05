@@ -21,17 +21,18 @@ const ENEMY_IMAGES = {
     kingChaos:     'assets/enemies/king-chaos.png',
 };
 
-const cache = {};
+const defenderCache = {};
+const enemyCache = {};
 
 export function getDefenderImage(typeName) {
-    return cache[typeName] || null;
+    return defenderCache[typeName] || null;
 }
 
 export function getEnemyImage(typeName) {
-    return cache[typeName] || null;
+    return enemyCache[typeName] || null;
 }
 
-function loadImageSet(images, label, onProgress) {
+function loadImageSet(images, cache, label, onProgress) {
     const entries = Object.entries(images);
     let loaded = 0;
 
@@ -59,9 +60,9 @@ function loadImageSet(images, label, onProgress) {
 }
 
 export function loadDefenderImages(onProgress) {
-    return loadImageSet(DEFENDER_IMAGES, 'defender', onProgress);
+    return loadImageSet(DEFENDER_IMAGES, defenderCache, 'defender', onProgress);
 }
 
 export function loadEnemyImages(onProgress) {
-    return loadImageSet(ENEMY_IMAGES, 'enemy', onProgress);
+    return loadImageSet(ENEMY_IMAGES, enemyCache, 'enemy', onProgress);
 }
