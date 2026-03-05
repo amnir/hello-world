@@ -233,6 +233,35 @@ export function stopBgMusic() {
 
 /** Speak a Hebrew text aloud using the Web Speech API */
 let speakTimer = null;
+
+function doSpeak(text) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'he-IL';
+    utterance.rate = 0.8;    // slower for young kids
+    utterance.pitch = 1.25;  // higher pitch for warm, friendly tone
+
+    // Try to find a Hebrew voice
+    const voices = window.speechSynthesis.getVoices();
+    const hebrewVoice = voices.find(v => v.lang.startsWith('he'));
+    if (hebrewVoice) {
+        utterance.voice = hebrewVoice;
+    }
+
+    window.speechSynthesis.speak(utterance);
+
+    // Chrome workaround: speech can get permanently paused mid-utterance.
+    // Periodically call resume() to keep it going.
+    const rid = setInterval(() => {
+        if (!window.speechSynthesis.speaking) {
+            clearInterval(rid);
+        } else {
+            window.speechSynthesis.resume();
+        }
+    }, 5000);
+    utterance.onend = () => clearInterval(rid);
+    utterance.onerror = () => clearInterval(rid);
+}
+
 export function speak(text) {
     if (!text || !window.speechSynthesis || !speechEnabled) return;
 
@@ -242,37 +271,17 @@ export function speak(text) {
         speakTimer = null;
     }
 
-    // Cancel any ongoing speech first
-    window.speechSynthesis.cancel();
-
-    // Delay after cancel() — all major browsers silently drop a speak()
-    // call that follows cancel() in the same microtask.
-    speakTimer = setTimeout(() => {
-        speakTimer = null;
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'he-IL';
-        utterance.rate = 0.8;    // slower for young kids
-        utterance.pitch = 1.25;  // higher pitch for warm, friendly tone
-
-        // Try to find a Hebrew voice
-        const voices = window.speechSynthesis.getVoices();
-        const hebrewVoice = voices.find(v => v.lang.startsWith('he'));
-        if (hebrewVoice) {
-            utterance.voice = hebrewVoice;
-        }
-
-        window.speechSynthesis.speak(utterance);
-
-        // Chrome workaround: speech can get permanently paused mid-utterance.
-        // Periodically call resume() to keep it going.
-        const rid = setInterval(() => {
-            if (!window.speechSynthesis.speaking) {
-                clearInterval(rid);
-            } else {
-                window.speechSynthesis.resume();
-            }
-        }, 5000);
-        utterance.onend = () => clearInterval(rid);
-        utterance.onerror = () => clearInterval(rid);
-    }, 50);
+    if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+        // Cancel ongoing speech, then delay — browsers silently drop a
+        // speak() call that follows cancel() in the same microtask.
+        window.speechSynthesis.cancel();
+        speakTimer = setTimeout(() => {
+            speakTimer = null;
+            doSpeak(text);
+        }, 50);
+    } else {
+        // Nothing playing — speak immediately so we stay within the
+        // user-gesture context (required for first activation).
+        doSpeak(text);
+    }
 }
