@@ -3388,9 +3388,11 @@ function drawLoadingScreen(progress) {
 }
 
 drawLoadingScreen(0);
+const totalImages = 13; // 7 defenders + 6 enemies
+let totalLoaded = 0;
 Promise.all([
-    loadDefenderImages((loaded, total) => drawLoadingScreen(loaded / (total * 2))),
-    loadEnemyImages((loaded, total) => drawLoadingScreen(0.5 + loaded / (total * 2))),
+    loadDefenderImages(() => drawLoadingScreen(++totalLoaded / totalImages)),
+    loadEnemyImages(() => drawLoadingScreen(++totalLoaded / totalImages)),
 ])
     .catch((err) => console.warn('Image preload failed, using procedural sprites:', err))
     .then(() => new Game(canvas))

@@ -47,7 +47,7 @@ Seven JS modules, all interconnected via ES6 imports:
 
 ## Key Design Decisions
 
-- **Procedural-first with optional image assets:** Defenders have AI-generated PNG sprites (`assets/defenders/`) loaded via `js/assets.js`, with automatic fallback to procedural canvas drawing if images fail. Enemy sprites and all audio remain fully procedural/synthesized.
+- **Procedural-first with optional image assets:** Defenders and enemies have AI-generated PNG sprites (`assets/defenders/`, `assets/enemies/`) loaded via `js/assets.js`, with automatic fallback to procedural canvas drawing if images fail. All audio remains fully synthesized.
 - **RTL layout:** Enemies approach from the left, defenders protect the house on the right. Hebrew text and UI follow RTL conventions.
 - **Grid-based:** 3 rows × 6 columns for defender placement.
 - **Kid-safe:** Positive reinforcement (stars for all attempts), no scary content, large touch targets (48×48px min).

@@ -8,9 +8,9 @@
 
 import { getDefenderImage, getEnemyImage } from './assets.js';
 
-function withImage(typeName, proceduralFn, transformFn) {
+function withImageSource(getImageFn, typeName, proceduralFn, transformFn) {
     return (ctx, x, y, size, time) => {
-        const img = getDefenderImage(typeName);
+        const img = getImageFn(typeName);
         if (!img) return proceduralFn(ctx, x, y, size, time);
         ctx.save();
         try {
@@ -24,21 +24,10 @@ function withImage(typeName, proceduralFn, transformFn) {
     };
 }
 
-function withEnemyImage(typeName, proceduralFn, transformFn) {
-    return (ctx, x, y, size, time) => {
-        const img = getEnemyImage(typeName);
-        if (!img) return proceduralFn(ctx, x, y, size, time);
-        ctx.save();
-        try {
-            ctx.translate(x, y);
-            if (transformFn) transformFn(ctx, time);
-            const s = size * 2.8;
-            ctx.drawImage(img, -s / 2, -s / 2, s, s);
-        } finally {
-            ctx.restore();
-        }
-    };
-}
+const withImage = (typeName, proceduralFn, transformFn) =>
+    withImageSource(getDefenderImage, typeName, proceduralFn, transformFn);
+const withEnemyImage = (typeName, proceduralFn, transformFn) =>
+    withImageSource(getEnemyImage, typeName, proceduralFn, transformFn);
 
 // ─── Helper Functions ────────────────────────────────────────────────────────
 
