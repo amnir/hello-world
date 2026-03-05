@@ -17,7 +17,7 @@ import {
     getSfxEnabled, getMusicEnabled, getSpeechEnabled,
 } from './audio.js';
 
-import { loadDefenderImages } from './assets.js';
+import { loadDefenderImages, loadEnemyImages } from './assets.js';
 import { DEFENDER_DEFS, ENEMY_DEFS, LEVELS } from './levels.js';
 import { generateChallenge } from './challenges.js';
 import { Tutorial } from './tutorial.js';
@@ -3388,7 +3388,24 @@ function drawLoadingScreen(progress) {
 }
 
 drawLoadingScreen(0);
-loadDefenderImages((loaded, total) => drawLoadingScreen(loaded / total))
-    .catch((err) => console.warn('Image preload failed, using procedural sprites:', err))
+const totalImages = 13; // 7 defenders + 6 enemies
+let totalLoaded = 0;
+Promise.all([
+    loadDefenderImages(() => drawLoadingScreen(++totalLoaded / totalImages)),
+    loadEnemyImages(() => drawLoadingScreen(++totalLoaded / totalImages)),
+])
     .then(() => new Game(canvas))
-    .catch((err) => console.error('Fatal: Game failed to initialize', err));
+    .catch((err) => {
+        console.error('Fatal: Game failed to initialize', err);
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+        ctx.fillStyle = '#2c3e50';
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        ctx.fillStyle = '#e74c3c';
+        ctx.font = 'bold 28px Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('שגיאה בטעינת המשחק', CANVAS_W / 2, CANVAS_H / 2 - 20);
+        ctx.fillStyle = '#bdc3c7';
+        ctx.font = '18px Arial, sans-serif';
+        ctx.fillText('נסו לרענן את הדף', CANVAS_W / 2, CANVAS_H / 2 + 20);
+    });
