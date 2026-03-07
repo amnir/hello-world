@@ -27,10 +27,19 @@ function getCtx() {
 }
 
 /** Ensure audio context is resumed (must be called from user gesture) */
+let speechUnlocked = false;
 export function initAudio() {
     const ctx = getCtx();
     if (ctx.state === 'suspended') {
         ctx.resume();
+    }
+    // iOS requires speechSynthesis.speak() within a user gesture to unlock it.
+    // Fire a silent utterance once so later speak() calls work from any context.
+    if (!speechUnlocked && window.speechSynthesis) {
+        const silent = new SpeechSynthesisUtterance('');
+        silent.volume = 0;
+        window.speechSynthesis.speak(silent);
+        speechUnlocked = true;
     }
 }
 
